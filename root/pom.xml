@@ -65,6 +65,7 @@
                 <scope>import</scope>
             </dependency>
 
+			<!-- Spring Boot Dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-r2dbc</artifactId>
@@ -103,6 +104,8 @@
                 <optional>true</optional>
                 <version>${spring-boot.version}</version>
             </dependency>
+
+			<!-- Database Dependencies -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
@@ -115,6 +118,8 @@
                 <scope>runtime</scope>
                 <version>${r2dbc-postgres.version}</version>
             </dependency>
+
+			<!-- Library Dependencies -->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -127,6 +132,8 @@
                 <version>${mapstruct.version}</version>
                 <scope>compile</scope>
             </dependency>
+
+			<!-- Spring Boot Test Dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-r2dbc-test</artifactId>
@@ -164,7 +171,7 @@
                 <version>${spring-boot.version}</version>
             </dependency>
 
-            <!-- TESTER -->
+            <!-- Container Dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-testcontainers</artifactId>
