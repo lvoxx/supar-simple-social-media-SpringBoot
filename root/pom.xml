@@ -23,7 +23,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		
         <!-- Spring Boot & Cloud versions -->
-        <spring-boot.version>3.2.1</spring-boot.version>
+        <spring-boot.version>4.0.2</spring-boot.version>
         <spring-cloud.version>2025.1.0</spring-cloud.version>
 
         <!-- Library versions -->
@@ -94,14 +94,6 @@
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-webflux</artifactId>
-                <version>${spring-boot.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-docker-compose</artifactId>
-                <scope>runtime</scope>
-                <optional>true</optional>
                 <version>${spring-boot.version}</version>
             </dependency>
 
