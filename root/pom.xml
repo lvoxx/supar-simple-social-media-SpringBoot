@@ -7,6 +7,8 @@
     <artifactId>root</artifactId>
     <version>1.0.0</version>
 
+    <packaging>pom</packaging>
+
     <name>root</name>
     <description>Root POM for all microservices</description>
 
@@ -65,7 +67,7 @@
                 <scope>import</scope>
             </dependency>
 
-			<!-- Spring Boot Dependencies -->
+            <!-- Spring Boot Dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-r2dbc</artifactId>
@@ -97,7 +99,7 @@
                 <version>${spring-boot.version}</version>
             </dependency>
 
-			<!-- Database Dependencies -->
+            <!-- Database Dependencies -->
             <dependency>
                 <groupId>org.postgresql</groupId>
                 <artifactId>postgresql</artifactId>
@@ -111,7 +113,7 @@
                 <version>${r2dbc-postgres.version}</version>
             </dependency>
 
-			<!-- Library Dependencies -->
+            <!-- Library Dependencies -->
             <dependency>
                 <groupId>org.projectlombok</groupId>
                 <artifactId>lombok</artifactId>
@@ -125,7 +127,7 @@
                 <scope>compile</scope>
             </dependency>
 
-			<!-- Spring Boot Test Dependencies -->
+            <!-- Spring Boot Test Dependencies -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-data-r2dbc-test</artifactId>
@@ -178,9 +180,9 @@
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
-                <artifactId>testcontainers-postgresql</artifactId>
-                <scope>test</scope>
+                <artifactId>postgresql</artifactId>
                 <version>${testcontainers-postgresql.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.testcontainers</groupId>
