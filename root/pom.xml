@@ -14,6 +14,8 @@
 
     <!-- MODULES -->
     <modules>
+        <module>starter/r2dbc-starter</module>
+        <module>inventory</module>
         <module>warehouse</module>
     </modules>
 
