@@ -1,7 +1,5 @@
 package io.github.lvoxx.r2dbc_starter.model;
 
-import java.util.UUID;
-
 import org.springframework.data.relational.core.mapping.Column;
 
 import lombok.Getter;
