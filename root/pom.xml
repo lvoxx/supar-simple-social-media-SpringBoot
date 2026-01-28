@@ -23,6 +23,7 @@
     <!-- PROPERTIES -->
     <properties>
         <r2dbc-postgres-starter.version>1.0.0</r2dbc-postgres-starter.version>
+        <r2dbc-cassandra-starter.version>1.0.0</r2dbc-cassandra-starter.version>
     
         <java.version>25</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
@@ -72,10 +73,16 @@
                 <scope>import</scope>
             </dependency>
 
+            <!-- Starter Modules -->
             <dependency>
                 <groupId>io.github.lvoxx</groupId>
                 <artifactId>r2dbc-postgres-starter</artifactId>
                 <version>${r2dbc-postgres-starter.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.github.lvoxx</groupId>
+                <artifactId>r2dbc-cassandra-starter</artifactId>
+                <version>${r2dbc-cassandra-starter.version}</version>
             </dependency>
 
             <!-- Spring Boot Dependencies -->

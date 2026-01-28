@@ -14,7 +14,7 @@
     <artifactId>r2dbc-starter</artifactId>
     <version>1.0.0</version>
     <name>r2dbc-postgres-starter</name>
-    <description>R2DBC Starter Module</description>
+    <description>R2DBC Postgres Starter Module</description>
 	
     <dependencies>
         <dependency>
@@ -36,11 +36,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-r2dbc-test</artifactId>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
