@@ -15,6 +15,7 @@
     <!-- MODULES -->
     <modules>
         <module>starter/r2dbc-postgres-starter</module>
+        <module>starter/r2dbc-cassandra-starter</module>
         <module>inventory</module>
         <module>warehouse</module>
     </modules>
