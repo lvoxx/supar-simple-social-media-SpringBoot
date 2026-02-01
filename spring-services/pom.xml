@@ -59,7 +59,7 @@
 	</properties>
 
 	<modules>
-		<module>starter/postgres_starter</module>
+		<module>starter/postgres-starter</module>
 		<module>user-service</module>
 	</modules>
 
@@ -69,6 +69,16 @@
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>user-service</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>common-core</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>postgres-starter</artifactId>
 				<version>1.0.0</version>
 			</dependency>
 
