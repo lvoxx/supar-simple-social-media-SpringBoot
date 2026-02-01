@@ -30,14 +30,10 @@ flowchart TB
     end
 
     %% ===== Edge Layer =====
-    subgraph Edge["Edge / Ingress Layer"]
+    subgraph Edge["Edge / Ingress (Kubernetes)"]
         CDN[Cloudflare / CDN]
         Gateway[API Gateway<br/>(Spring Cloud Gateway - Reactive)]
         WSG[WebSocket Gateway<br/>(Reactive)]
-    end
-
-    %% ===== Auth =====
-    subgraph Auth
         Keycloak[Keycloak<br/>OAuth2 / OIDC]
     end
 
@@ -50,13 +46,14 @@ flowchart TB
         MsgSvc[Messaging Service]
         NotifySvc[Notification Service]
         SearchSvc[Search Service]
-        AdminSvc[Admin / Dev Dashboard]
+        MediaSvc[Media Service]
+        AdminSvc[Admin Service]
+        AnalyticsSvc[Analytics Ingest Service]
     end
 
     %% ===== AI Layer =====
     subgraph AI["AI / ML Layer (FastAPI)"]
-        AISvc[AI Inference Service<br/>Moderation / Recommend]
-        ModelReg[Model Registry<br/>(MLflow)]
+        AISvc[AI Inference Service]
     end
 
     %% ===== Streaming =====
@@ -90,20 +87,24 @@ flowchart TB
         Ansible[Ansible]
     end
 
-    %% ===== Connections =====
+    %% ===== Client Flow =====
     Web --> CDN --> Gateway
     Mobile --> CDN --> Gateway
 
+    %% ===== Auth only at Gateway =====
     Gateway --> Keycloak
+
+    %% ===== Internal Trust (No Auth) =====
     Gateway --> UserSvc
     Gateway --> PostSvc
     Gateway --> FeedSvc
     Gateway --> SearchSvc
+    Gateway --> MediaSvc
     Gateway --> AdminSvc
 
     Gateway --> WSG --> MsgSvc
-    WSG --> Redis
 
+    %% ===== Data Access =====
     UserSvc --> PG
     PostSvc --> PG
     FeedSvc --> Cassandra
@@ -111,30 +112,36 @@ flowchart TB
     SocialSvc --> Cassandra
     AdminSvc --> Cassandra
 
-    PostSvc --> Cloudinary
-    MsgSvc --> Cloudinary
-
     FeedSvc --> Redis
     NotifySvc --> Redis
+    WSG --> Redis
 
+    PostSvc --> Cloudinary
+    MediaSvc --> Cloudinary
+
+    %% ===== Streaming =====
     PostSvc --> Kafka
     MsgSvc --> Kafka
     NotifySvc --> Kafka
+    AnalyticsSvc --> Kafka
 
+    Kafka --> FeedSvc
     Kafka --> Flink
     Flink --> Cassandra
     Flink --> Redis
 
-    SearchSvc --> ES
-    ES --> SearchSvc
-
     Kafka --> AISvc
     AISvc --> Redis
 
+    %% ===== Search =====
+    SearchSvc --> ES
+
+    %% ===== Observability =====
     Microservices --> Zipkin
     Microservices --> Prom
     Prom --> Grafana
 
+    %% ===== Deployment =====
     Jenkins --> Helm
     Helm --> ArgoCD
     Terraform --> ArgoCD
