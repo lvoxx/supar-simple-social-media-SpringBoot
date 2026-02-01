@@ -60,6 +60,7 @@
 
 	<modules>
 		<module>starter/postgres-starter</module>
+		<module>common/common-core</module>
 		<module>user-service</module>
 	</modules>
 
