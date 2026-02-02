@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
       PGDATA: /data/postgres
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", ${POSTGRES_USER:-postgres}]
+      test: ["CMD", "pg_isready", "-U", "${POSTGRES_USER:-postgres}"]
     volumes:
        - postgres:/data/postgres
     ports:
