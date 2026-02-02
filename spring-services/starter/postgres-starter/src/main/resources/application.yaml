@@ -1,8 +1,8 @@
 spring:
   r2dbc:
-    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/super_simple_social_media_db}
-    username: ${SPRING_R2DBC_USERNAME:postgres}
-    password: ${SPRING_R2DBC_PASSWORD:postgres}
+    url: r2dbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:userdb}
+    username: ${POSTGRES_USER:userservice}
+    password: ${POSTGRES_PASSWORD:password}
 
     pool:
       enabled: true
@@ -11,6 +11,7 @@ spring:
       max-idle-time: 30m
       max-life-time: 60m
       acquire-retry: 3
+      validation-query: SELECT 1
 
   sql:
     init:
