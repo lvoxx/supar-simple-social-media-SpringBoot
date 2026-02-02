@@ -1,14 +1,18 @@
 package io.github.lvoxx.user_service.model;
 
+import java.time.LocalDateTime;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.Transient;
+import org.springframework.data.domain.Persistable;
 import org.springframework.data.relational.core.mapping.Column;
 import org.springframework.data.relational.core.mapping.Table;
 
-import io.github.lvoxx.common_core.model.BaseEntity;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.Builder.Default;
 import lombok.experimental.SuperBuilder;
 
 /**
@@ -18,65 +22,75 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-@EqualsAndHashCode(callSuper = true)
+@EqualsAndHashCode(callSuper = false)
 @Table("user_preferences")
-public class UserPreferences extends BaseEntity {
+public class UserPreferences implements Persistable<Long> {
+    
+    @Id
+    private Long id;
     
     @Column("user_id")
     private Long userId;
     
     // Privacy Settings
     @Column("show_email")
-    @Builder.Default
-    private Boolean showEmail = false;
+    private Boolean showEmail;
     
     @Column("show_birth_date")
-    @Builder.Default
-    private Boolean showBirthDate = false;
+    private Boolean showBirthDate;
     
     @Column("allow_tagging")
-    @Builder.Default
-    private Boolean allowTagging = true;
+    private Boolean allowTagging;
     
     @Column("allow_mentions")
-    @Builder.Default
-    private Boolean allowMentions = true;
+    private Boolean allowMentions;
     
     // Notification Settings
     @Column("notify_new_follower")
-    @Builder.Default
-    private Boolean notifyNewFollower = true;
+    private Boolean notifyNewFollower;
     
     @Column("notify_post_like")
-    @Builder.Default
-    private Boolean notifyPostLike = true;
+    private Boolean notifyPostLike;
     
     @Column("notify_comment")
-    @Builder.Default
-    private Boolean notifyComment = true;
+    private Boolean notifyComment;
     
     @Column("notify_mention")
-    @Builder.Default
-    private Boolean notifyMention = true;
+    private Boolean notifyMention;
     
     @Column("notify_message")
-    @Builder.Default
-    private Boolean notifyMessage = true;
+    private Boolean notifyMessage;
     
     // Content Settings
     @Column("default_post_visibility")
-    @Builder.Default
-    private String defaultPostVisibility = "PUBLIC";
+    private String defaultPostVisibility;
     
     @Column("language")
-    @Builder.Default
-    private String language = "en";
+    private String language;
     
     @Column("timezone")
-    @Builder.Default
-    private String timezone = "UTC";
+    private String timezone;
     
     @Column("theme")
-    @Builder.Default
-    private String theme = "LIGHT";
+    private String theme;
+    
+    @Column("created_at")
+    private LocalDateTime createdAt;
+    
+    @Column("updated_at")
+    private LocalDateTime updatedAt;
+    
+    @Transient
+    @Default
+    private boolean isNew = false;
+    
+    @Override
+    public boolean isNew() {
+        return isNew || id == null;
+    }
+    
+    public UserPreferences setAsNew() {
+        this.isNew = true;
+        return this;
+    }
 }
