@@ -47,9 +47,18 @@
 	</scm>
 
 	<properties>
+		<!-- CORE VERSION -->
 		<java.version>25</java.version>
 		<spring-cloud.version>2025.1.0</spring-cloud.version>
 		<spring-boot.version>4.0.2</spring-boot.version>
+		<spring-context.version>7.0.3</spring-context.version>
+
+		<!-- INTERNAL MODULE VERSIONS -->
+		<postgres-starter.version>1.0.0</postgres-starter.version>
+		<redis-starter.version>1.0.0</redis-starter.version>
+		<kafka-starter.version>1.0.0</kafka-starter.version>
+		<common-core.version>1.0.0</common-core.version>
+		<user-service.version>1.0.0</user-service.version>
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
 		<postgresql.version>42.7.9</postgresql.version>
@@ -72,30 +81,35 @@
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>user-service</artifactId>
-				<version>1.0.0</version>
+				<version>${user-service.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>common-core</artifactId>
-				<version>1.0.0</version>
+				<version>${common-core.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>postgres-starter</artifactId>
-				<version>1.0.0</version>
+				<version>${postgres-starter.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>redis-starter</artifactId>
-				<version>1.0.0</version>
+				<version>${redis-starter.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>kafka-starter</artifactId>
-				<version>1.0.0</version>
+				<version>${kafka-starter.version}</version>
 			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->
+			<dependency>
+				<groupId>org.springframework</groupId>
+				<artifactId>spring-context</artifactId>
+				<version>${spring-context.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-micrometer-tracing-brave</artifactId>
