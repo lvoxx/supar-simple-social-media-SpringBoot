@@ -64,6 +64,8 @@
 		<postgresql.version>42.7.9</postgresql.version>
 		<r2dbc-postgresql.version>1.1.1.RELEASE</r2dbc-postgresql.version>
 		<lombok.version>1.18.42</lombok.version>
+		<redis.version>4.1.0</redis.version>
+		<swagger-annotation.version>2.2.42</swagger-annotation.version>
 		<testcontainers.version>2.0.3</testcontainers.version>
 	</properties>
 
@@ -192,6 +194,16 @@
 				<artifactId>r2dbc-postgresql</artifactId>
 				<version>${r2dbc-postgresql.version}</version>
 				<scope>runtime</scope>
+			</dependency>
+			<dependency>
+				<groupId>org.redisson</groupId>
+				<artifactId>redisson</artifactId>
+				<version>${redis.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.swagger.core.v3</groupId>
+				<artifactId>swagger-annotations</artifactId>
+				<version>${swagger-annotation.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.projectlombok</groupId>
