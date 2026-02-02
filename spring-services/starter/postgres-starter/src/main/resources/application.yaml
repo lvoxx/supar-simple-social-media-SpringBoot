@@ -1,0 +1,38 @@
+spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/app_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+
+    hikari:
+      pool-name: PostgresHikariPool
+      maximum-pool-size: ${DB_POOL_MAX_SIZE:10}
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      keepalive-time: 300000
+      validation-timeout: 5000
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:none}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          time_zone: UTC
+        order_inserts: true
+        order_updates: true
+        generate_statistics: false
+
+  sql:
+    init:
+      mode: never
+
+logging:
+  level:
+    org.hibernate.SQL: off
+    org.hibernate.orm.jdbc.bind: off
