@@ -1,6 +1,6 @@
 spring:
   r2dbc:
-    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/app_db}
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/super_simple_social_media_db}
     username: ${SPRING_R2DBC_USERNAME:postgres}
     password: ${SPRING_R2DBC_PASSWORD:postgres}
 
