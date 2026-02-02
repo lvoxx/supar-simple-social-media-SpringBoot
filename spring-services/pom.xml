@@ -60,6 +60,8 @@
 
 	<modules>
 		<module>starter/postgres-starter</module>
+		<module>starter/redis-starter</module>
+		<module>starter/kafka-starter</module>
 		<module>common/common-core</module>
 		<module>user-service</module>
 	</modules>
@@ -80,6 +82,16 @@
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>postgres-starter</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>redis-starter</artifactId>
+				<version>1.0.0</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>kafka-starter</artifactId>
 				<version>1.0.0</version>
 			</dependency>
 
