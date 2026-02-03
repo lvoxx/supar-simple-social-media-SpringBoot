@@ -1,7 +1,7 @@
 package io.github.lvoxx.common_core.model;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -22,18 +22,20 @@ import lombok.NoArgsConstructor;
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
-    
+
     private String error;
-    
+
     private String message;
-    
-    private Map<String, Object> details;
-    
+
+    private List<String>details;
+
+    private Integer status;
+
     private String path;
-    
+
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
-    
+
     /**
      * Create error response with error type and message
      */
@@ -41,20 +43,22 @@ public class ErrorResponse {
         return ErrorResponse.builder()
                 .error(error)
                 .message(message)
+                .status(500)
                 .build();
     }
-    
+
     /**
      * Create error response with error type, message and details
      */
-    public static ErrorResponse of(String error, String message, Map<String, Object> details) {
+    public static ErrorResponse of(String error, String message, Integer status, List<String> details) {
         return ErrorResponse.builder()
                 .error(error)
                 .message(message)
+                .status(status)
                 .details(details)
                 .build();
     }
-    
+
     /**
      * Create error response from exception
      */
@@ -62,6 +66,7 @@ public class ErrorResponse {
         return ErrorResponse.builder()
                 .error(ex.getClass().getSimpleName())
                 .message(ex.getMessage())
+                .status(500)
                 .build();
     }
 }
