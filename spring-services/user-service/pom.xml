@@ -20,7 +20,10 @@
 		<dependency>
 			<groupId>io.github.lvoxx</groupId>
 			<artifactId>common-core</artifactId>
-			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>redis-starter</artifactId>
 		</dependency>
 
 		<dependency>
