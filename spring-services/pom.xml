@@ -76,6 +76,7 @@
 		<module>starter/postgres-starter</module>
 		<module>starter/redis-starter</module>
 		<module>starter/kafka-producer-starter</module>
+		<module>starter/kafka-consumer-starter</module>
 		<module>common/common-core</module>
 		<module>user-service</module>
 	</modules>
