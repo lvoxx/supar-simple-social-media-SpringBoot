@@ -12,9 +12,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 
-import io.github.lvoxx.common_core.exception.model.DuplicateResourceException;
-import io.github.lvoxx.common_core.exception.model.ResourceNotFoundException;
-import io.github.lvoxx.common_core.exception.model.UnknownException;
+import io.github.lvoxx.common_core.exception.model.ApplicationException;
+import io.github.lvoxx.common_core.exception.model.common_exception.DuplicateResourceException;
+import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
 import io.github.lvoxx.common_core.model.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -86,9 +86,9 @@ public class GlobalExceptionHandler {
         return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error));
     }
     
-    @ExceptionHandler(UnknownException.class)
+    @ExceptionHandler(ApplicationException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleUnknownException(
-            UnknownException ex, ServerWebExchange exchange) {
+            ApplicationException ex, ServerWebExchange exchange) {
         log.error("User service error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = ErrorResponse.builder()
