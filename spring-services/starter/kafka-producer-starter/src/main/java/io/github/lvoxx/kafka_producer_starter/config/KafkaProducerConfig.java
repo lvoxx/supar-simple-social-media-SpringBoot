@@ -1,4 +1,4 @@
-package io.github.lvoxx.kafka_starter.config;
+package io.github.lvoxx.kafka_producer_starter.config;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,16 +36,20 @@ import org.springframework.kafka.transaction.KafkaTransactionManager;
 public class KafkaProducerConfig {
 
     /**
-     * Creates and configures the Kafka producer factory with enhanced reliability settings.
+     * Creates and configures the Kafka producer factory with enhanced reliability
+     * settings.
      * 
      * This factory is configured with:
      * - Acknowledgment from all in-sync replicas (acks=all) for maximum durability
      * - Idempotent producer enabled to prevent duplicate message delivery
-     * - Retry count set to Integer.MAX_VALUE for automatic recovery from transient failures
-     * - Max in-flight requests set to 5 for optimized throughput without sacrificing ordering
+     * - Retry count set to Integer.MAX_VALUE for automatic recovery from transient
+     * failures
+     * - Max in-flight requests set to 5 for optimized throughput without
+     * sacrificing ordering
      * 
      * @param properties Spring Kafka properties for baseline configuration
-     * @return a configured ProducerFactory instance for String keys and Object values
+     * @return a configured ProducerFactory instance for String keys and Object
+     *         values
      */
     @Bean
     ProducerFactory<String, Object> producerFactory(KafkaProperties properties) {
@@ -81,9 +85,11 @@ public class KafkaProducerConfig {
     /**
      * Creates a Kafka transaction manager for managing distributed transactions.
      * 
-     * This transaction manager enables exactly-once semantics for message publishing,
+     * This transaction manager enables exactly-once semantics for message
+     * publishing,
      * ensuring that messages are delivered reliably within a transactional context.
-     * It should be used in conjunction with Spring's {@code @Transactional} annotation
+     * It should be used in conjunction with Spring's {@code @Transactional}
+     * annotation
      * to coordinate Kafka producer operations with other transactional resources.
      * 
      * @param pf the ProducerFactory configured in this configuration
