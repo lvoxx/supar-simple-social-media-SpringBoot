@@ -57,6 +57,7 @@
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
 		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
+		<kafka-consumer-starter.version>1.0.0</kafka-consumer-starter.version>
 		<common-core.version>1.0.0</common-core.version>
 		<user-service.version>1.0.0</user-service.version>
 
@@ -106,6 +107,11 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>kafka-producer-starter</artifactId>
 				<version>${kafka-producer-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>kafka-consumer-starter</artifactId>
+				<version>${kafka-consumer-starter.version}</version>
 			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->

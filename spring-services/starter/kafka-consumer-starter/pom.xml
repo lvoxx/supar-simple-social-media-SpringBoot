@@ -11,10 +11,10 @@
 	</parent>
 
 	<groupId>io.github.lvoxx</groupId>
-	<artifactId>kafka-consumer-starter</artifactId>
+	<artifactId>kafka-producer-starter</artifactId>
 	<version>1.0.0</version>
-	<name>kafka-consumer-starter</name>
-	<description>Kafka Consumer Starter Module</description>
+	<name>kafka-producer-starter</name>
+	<description>Kafka Starter Module</description>
 
 	<dependencies>
 		<dependency>
