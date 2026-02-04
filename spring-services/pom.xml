@@ -56,7 +56,7 @@
 		<!-- INTERNAL MODULE VERSIONS -->
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
-		<kafka-starter.version>1.0.0</kafka-starter.version>
+		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
 		<common-core.version>1.0.0</common-core.version>
 		<user-service.version>1.0.0</user-service.version>
 
@@ -66,6 +66,7 @@
 		<lombok.version>1.18.42</lombok.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<redis.version>4.1.0</redis.version>
+		<kafka-streams.version>4.1.1</kafka-streams.version>
 		<swagger-annotation.version>2.2.42</swagger-annotation.version>
 		<testcontainers.version>2.0.3</testcontainers.version>
 	</properties>
@@ -73,7 +74,7 @@
 	<modules>
 		<module>starter/postgres-starter</module>
 		<module>starter/redis-starter</module>
-		<module>starter/kafka-starter</module>
+		<module>starter/kafka-producer-starter</module>
 		<module>common/common-core</module>
 		<module>user-service</module>
 	</modules>
@@ -103,8 +104,8 @@
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
-				<artifactId>kafka-starter</artifactId>
-				<version>${kafka-starter.version}</version>
+				<artifactId>kafka-producer-starter</artifactId>
+				<version>${kafka-producer-starter.version}</version>
 			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->
@@ -142,6 +143,16 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-data-redis-reactive</artifactId>
 				<version>${spring-boot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-starter-kafka</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.kafka</groupId>
+				<artifactId>kafka-streams</artifactId>
+				<version>${kafka-streams.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
