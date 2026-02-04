@@ -1,0 +1,21 @@
+package io.github.lvoxx.common_core.exception.model.post_exception;
+
+import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+
+/**
+ * Exception thrown when media upload fails
+ */
+public class MediaUploadFailedException extends ResourceNotFoundException {
+
+    public MediaUploadFailedException() {
+        super();
+    }
+
+    public MediaUploadFailedException(String message) {
+        super(message);
+    }
+
+    public MediaUploadFailedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
