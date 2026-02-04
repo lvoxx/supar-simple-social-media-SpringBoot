@@ -1,11 +1,11 @@
 package io.github.lvoxx.common_core.exception.model.post_exception;
 
-import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+import io.github.lvoxx.common_core.exception.model.common_exception.ResourceBlockedException;
 
 /**
  * Exception thrown when content violates policies
  */
-public class ContentViolationException extends ResourceNotFoundException {
+public class ContentViolationException extends ResourceBlockedException {
 
     public ContentViolationException() {
         super();

@@ -1,11 +1,11 @@
 package io.github.lvoxx.common_core.exception.model.post_exception;
 
-import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+import io.github.lvoxx.common_core.exception.model.common_exception.InfrastructureException;
 
 /**
  * Exception thrown when media upload fails
  */
-public class MediaUploadFailedException extends ResourceNotFoundException {
+public class MediaUploadFailedException extends InfrastructureException {
 
     public MediaUploadFailedException() {
         super();

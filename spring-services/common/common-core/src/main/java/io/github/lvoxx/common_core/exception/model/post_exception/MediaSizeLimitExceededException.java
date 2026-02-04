@@ -1,11 +1,11 @@
 package io.github.lvoxx.common_core.exception.model.post_exception;
 
-import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+import io.github.lvoxx.common_core.exception.model.common_exception.ValidationException;
 
 /**
  * Exception thrown when media size exceeds the limit
  */
-public class MediaSizeLimitExceededException extends ResourceNotFoundException {
+public class MediaSizeLimitExceededException extends ValidationException {
 
     public MediaSizeLimitExceededException() {
         super();
