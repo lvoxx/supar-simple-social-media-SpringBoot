@@ -1,15 +1,43 @@
 spring:
-  # Kafka Configuration
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
-      acks: all
-      retries: 3
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka-1:9092,kafka-2:9092,kafka-3:9092}
+
+    client-id: ${spring.application.name}
+
+    consumer:
+      group-id: ${spring.application.name}
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      max-poll-records: 200
+      fetch-min-size: 1
+      fetch-max-wait: 500
+      heartbeat-interval: 3000
+      session-timeout: 45000
+      max-poll-interval: 300000
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+
       properties:
-        enable.idempotence: true
-        max.in.flight.requests.per.connection: 5
-        compression.type: snappy
-        linger.ms: 10
-        batch.size: 32768
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.trusted.packages: "*"
+        spring.json.use.type.headers: false
+
+    listener:
+      type: batch
+      ack-mode: manual
+      concurrency: 3
+      observation-enabled: true
+      poll-timeout: 1500
+
+    properties:
+      # ===== stability =====
+      partition.assignment.strategy: org.apache.kafka.clients.consumer.CooperativeStickyAssignor
+
+      # ===== network =====
+      reconnect.backoff.ms: 1000
+      reconnect.backoff.max.ms: 10000
+      retry.backoff.ms: 1000
+
+      # ===== isolation for EOS =====
+      isolation.level: read_committed

@@ -1,11 +1,44 @@
 spring:
-  # Kafka Configuration
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    consumer:
-      group-id: user-service-group
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      auto-offset-reset: earliest
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka-1:9092,kafka-2:9092,kafka-3:9092}
+
+    client-id: ${spring.application.name}
+
+    properties:
+      # ===== reliability =====
+      acks: all
+      enable.idempotence: true
+      max.in.flight.requests.per.connection: 5
+      retries: 2147483647
+      delivery.timeout.ms: 120000
+      request.timeout.ms: 30000
+
+      # ===== batching & throughput =====
+      compression.type: zstd
+      linger.ms: 20
+      batch.size: 65536
+      buffer.memory: 67108864
+
+      # ===== ordering =====
+      partitioner.class: org.apache.kafka.clients.producer.internals.DefaultPartitioner
+
+      # ===== timeout =====
+      metadata.max.age.ms: 300000
+      connections.max.idle.ms: 540000
+
+      # ===== transaction (for exactly once) =====
+      transaction.timeout.ms: 60000
+
+      # ===== observability =====
+      interceptor.classes: io.micrometer.kafka.KafkaClientMetrics
+
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
       properties:
-        spring.json.trusted.packages: "*"
+        spring.json.add.type.headers: false
+        spring.json.write.dates.as.timestamps: false
+
+    template:
+      observation-enabled: true
