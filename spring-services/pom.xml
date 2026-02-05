@@ -68,6 +68,7 @@
 		<lombok.version>1.18.42</lombok.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<redis.version>4.1.0</redis.version>
+		<cloudinary.version>1.39.0</cloudinary.version>
 		<kafka-streams.version>4.1.1</kafka-streams.version>
 		<swagger-annotation.version>2.2.42</swagger-annotation.version>
 		<testcontainers.version>2.0.3</testcontainers.version>
@@ -225,6 +226,11 @@
 				<groupId>org.redisson</groupId>
 				<artifactId>redisson</artifactId>
 				<version>${redis.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.cloudinary</groupId>
+				<artifactId>cloudinary-http44</artifactId>
+				<version>${cloudinary.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.swagger.core.v3</groupId>
