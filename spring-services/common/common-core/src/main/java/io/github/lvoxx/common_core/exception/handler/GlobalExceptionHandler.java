@@ -35,56 +35,132 @@ import reactor.core.publisher.Mono;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ==================== COMMON EXCEPTIONS ====================
+    // ==================== NOT_FOUND EXCEPTIONS (404) ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleResourceNotFoundException(
-            ResourceNotFoundException ex, ServerWebExchange exchange) {
+    @ExceptionHandler({
+            ResourceNotFoundException.class,
+            CacheMissedException.class,
+            PostNotFoundException.class,
+            CommentNotFoundException.class,
+            NotificationNotFoundException.class,
+            ConversationNotFoundException.class,
+            MessageNotFoundException.class,
+            UserNotFoundException.class,
+            TicketNotFoundException.class,
+            ContentViolationException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleNotFoundException(
+            Exception ex, ServerWebExchange exchange) {
         log.error("Resource not found: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
     }
 
-    @ExceptionHandler(DuplicateResourceException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleDuplicateResourceException(
-            DuplicateResourceException ex, ServerWebExchange exchange) {
-        log.error("Duplicate resource: {}", ex.getMessage());
+    // ==================== CONFLICT EXCEPTIONS (409) ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
+
+    @ExceptionHandler({
+            DuplicateResourceException.class,
+            ConcurrencyException.class,
+            UserAlreadyExistsException.class,
+            DuplicateEventException.class,
+            TicketAlreadyClosedException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleConflictException(
+            Exception ex, ServerWebExchange exchange) {
+        log.error("Conflict: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.CONFLICT, exchange);
     }
 
-    @ExceptionHandler(CacheMissedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleCacheMissedException(
-            CacheMissedException ex, ServerWebExchange exchange) {
-        log.warn("Cache missed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
+    // ==================== FORBIDDEN EXCEPTIONS (403) ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
 
-    @ExceptionHandler(ConcurrencyException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleConcurrencyException(
-            ConcurrencyException ex, ServerWebExchange exchange) {
-        log.error("Concurrency conflict: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.CONFLICT, exchange);
-    }
-
-    @ExceptionHandler(ForbiddenException.class)
+    @ExceptionHandler({
+            ForbiddenException.class,
+            ResourceBlockedException.class,
+            CommentDisabledException.class,
+            RecipientBlockedException.class,
+            PrivacyRestrictionException.class,
+            ProfileUpdateNotAllowedException.class,
+            UserBlockedException.class,
+            UserDeactivatedException.class,
+            AdminPermissionDeniedException.class,
+            AppealNotAllowedException.class
+    })
     public Mono<ResponseEntity<ErrorResponse>> handleForbiddenException(
-            ForbiddenException ex, ServerWebExchange exchange) {
+            Exception ex, ServerWebExchange exchange) {
         log.warn("Forbidden access: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
     }
 
-    @ExceptionHandler(InfrastructureException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleInfrastructureException(
-            InfrastructureException ex, ServerWebExchange exchange) {
-        log.error("Infrastructure error: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.SERVICE_UNAVAILABLE, exchange);
-    }
+    // ==================== BAD_REQUEST EXCEPTIONS (400) ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
 
-    @ExceptionHandler(InvalidException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleInvalidException(
-            InvalidException ex, ServerWebExchange exchange) {
+    @ExceptionHandler({
+            InvalidException.class,
+            ValidationException.class,
+            SearchQueryInvalidException.class,
+            SearchResultLimitExceededException.class,
+            ModerationActionInvalidException.class,
+            EventSchemaMismatchException.class,
+            EventValidationException.class,
+            ReportInvalidException.class,
+            InvalidNotificationTargetException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleBadRequestException(
+            Exception ex, ServerWebExchange exchange) {
         log.error("Invalid request: {}", ex.getMessage());
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
     }
+
+    // ==================== INTERNAL_SERVER_ERROR EXCEPTIONS (500)
+    // ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
+
+    @ExceptionHandler({
+            SerializationException.class,
+            MessageSendFailedException.class,
+            NotificationDeliveryFailedException.class,
+            MediaUploadFailedException.class,
+            SystemConfigUpdateFailedException.class,
+            EventIngestFailedException.class,
+            FeedGenerationFailedException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleInternalServerErrorException(
+            Exception ex, ServerWebExchange exchange) {
+        log.error("Internal server error: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
+    }
+
+    // ==================== SERVICE_UNAVAILABLE EXCEPTIONS (503)
+    // ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
+
+    @ExceptionHandler({
+            InfrastructureException.class,
+            SearchIndexUnavailableException.class,
+            FeedNotAvailableException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleServiceUnavailableException(
+            Exception ex, ServerWebExchange exchange) {
+        log.error("Service unavailable: {}", ex.getMessage(), ex);
+        return buildErrorResponse(ex, HttpStatus.SERVICE_UNAVAILABLE, exchange);
+    }
+
+    // ==================== REQUEST_TIMEOUT EXCEPTIONS (408) ====================
+    // Common exceptions and service-specific exceptions with same HTTP status
+
+    @ExceptionHandler({
+            TimeoutException.class,
+            SearchTimeoutException.class
+    })
+    public Mono<ResponseEntity<ErrorResponse>> handleRequestTimeoutException(
+            Exception ex, ServerWebExchange exchange) {
+        log.error("Request timeout: {}", ex.getMessage());
+        return buildErrorResponse(ex, HttpStatus.REQUEST_TIMEOUT, exchange);
+    }
+
+    // ==================== TOO_MANY_REQUESTS EXCEPTION (429) ====================
 
     @ExceptionHandler(RateLimitExceededException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleRateLimitExceededException(
@@ -93,123 +169,7 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.TOO_MANY_REQUESTS, exchange);
     }
 
-    @ExceptionHandler(ResourceBlockedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleResourceBlockedException(
-            ResourceBlockedException ex, ServerWebExchange exchange) {
-        log.warn("Resource blocked: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(SerializationException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSerializationException(
-            SerializationException ex, ServerWebExchange exchange) {
-        log.error("Serialization error: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    @ExceptionHandler(TimeoutException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleTimeoutException(
-            TimeoutException ex, ServerWebExchange exchange) {
-        log.error("Request timeout: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.REQUEST_TIMEOUT, exchange);
-    }
-
-    @ExceptionHandler(ValidationException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleValidationException(
-            ValidationException ex, ServerWebExchange exchange) {
-        log.error("Validation failed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    // ==================== MESSAGING EXCEPTIONS ====================
-
-    @ExceptionHandler(ConversationNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleConversationNotFoundException(
-            ConversationNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Conversation not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    @ExceptionHandler(MessageNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleMessageNotFoundException(
-            MessageNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Message not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    @ExceptionHandler(MessageSendFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleMessageSendFailedException(
-            MessageSendFailedException ex, ServerWebExchange exchange) {
-        log.error("Message send failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    @ExceptionHandler(RecipientBlockedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleRecipientBlockedException(
-            RecipientBlockedException ex, ServerWebExchange exchange) {
-        log.warn("Recipient blocked: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    // ==================== NOTIFICATION EXCEPTIONS ====================
-
-    @ExceptionHandler(InvalidNotificationTargetException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleInvalidNotificationTargetException(
-            InvalidNotificationTargetException ex, ServerWebExchange exchange) {
-        log.error("Invalid notification target: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(NotificationDeliveryFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleNotificationDeliveryFailedException(
-            NotificationDeliveryFailedException ex, ServerWebExchange exchange) {
-        log.error("Notification delivery failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    @ExceptionHandler(NotificationNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleNotificationNotFoundException(
-            NotificationNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Notification not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    // ==================== POST EXCEPTIONS ====================
-
-    @ExceptionHandler(CommentDisabledException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleCommentDisabledException(
-            CommentDisabledException ex, ServerWebExchange exchange) {
-        log.warn("Comment disabled: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(CommentNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleCommentNotFoundException(
-            CommentNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Comment not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    @ExceptionHandler(ContentViolationException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleContentViolationException(
-            ContentViolationException ex, ServerWebExchange exchange) {
-        log.error("Content not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    @ExceptionHandler(MediaSizeLimitExceededException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleMediaSizeLimitExceededException(
-            MediaSizeLimitExceededException ex, ServerWebExchange exchange) {
-        log.warn("Media size limit exceeded: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.CONTENT_TOO_LARGE, exchange);
-    }
-
-    @ExceptionHandler(MediaUploadFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleMediaUploadFailedException(
-            MediaUploadFailedException ex, ServerWebExchange exchange) {
-        log.error("Media upload failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
+    // ==================== GONE EXCEPTION (410) ====================
 
     @ExceptionHandler(PostDeletedException.class)
     public Mono<ResponseEntity<ErrorResponse>> handlePostDeletedException(
@@ -218,187 +178,14 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(ex, HttpStatus.GONE, exchange);
     }
 
-    @ExceptionHandler(PostNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handlePostNotFoundException(
-            PostNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Post not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
+    // ==================== CONTENT_TOO_LARGE EXCEPTION (413) ====================
+
+    @ExceptionHandler(MediaSizeLimitExceededException.class)
+    public Mono<ResponseEntity<ErrorResponse>> handleMediaSizeLimitExceededException(
+            MediaSizeLimitExceededException ex, ServerWebExchange exchange) {
+        log.warn("Media size limit exceeded: {}", ex.getMessage());
+        return buildErrorResponse(ex, HttpStatus.CONTENT_TOO_LARGE, exchange);
     }
-
-    // ==================== SEARCH SERVICE EXCEPTIONS ====================
-
-    @ExceptionHandler(SearchIndexUnavailableException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSearchIndexUnavailableException(
-            SearchIndexUnavailableException ex, ServerWebExchange exchange) {
-        log.error("Search index unavailable: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.SERVICE_UNAVAILABLE, exchange);
-    }
-
-    @ExceptionHandler(SearchQueryInvalidException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSearchQueryInvalidException(
-            SearchQueryInvalidException ex, ServerWebExchange exchange) {
-        log.error("Invalid search query: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(SearchResultLimitExceededException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSearchResultLimitExceededException(
-            SearchResultLimitExceededException ex, ServerWebExchange exchange) {
-        log.warn("Search result limit exceeded: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(SearchTimeoutException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSearchTimeoutException(
-            SearchTimeoutException ex, ServerWebExchange exchange) {
-        log.error("Search timeout: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.REQUEST_TIMEOUT, exchange);
-    }
-
-    // ==================== USER EXCEPTIONS ====================
-
-    @ExceptionHandler(PrivacyRestrictionException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handlePrivacyRestrictionException(
-            PrivacyRestrictionException ex, ServerWebExchange exchange) {
-        log.warn("Privacy restriction: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(ProfileUpdateNotAllowedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleProfileUpdateNotAllowedException(
-            ProfileUpdateNotAllowedException ex, ServerWebExchange exchange) {
-        log.warn("Profile update not allowed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUserAlreadyExistsException(
-            UserAlreadyExistsException ex, ServerWebExchange exchange) {
-        log.error("User already exists: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.CONFLICT, exchange);
-    }
-
-    @ExceptionHandler(UserBlockedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUserBlockedException(
-            UserBlockedException ex, ServerWebExchange exchange) {
-        log.warn("User blocked: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(UserDeactivatedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUserDeactivatedException(
-            UserDeactivatedException ex, ServerWebExchange exchange) {
-        log.warn("User deactivated: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(UserNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleUserNotFoundException(
-            UserNotFoundException ex, ServerWebExchange exchange) {
-        log.error("User not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    // ==================== ADMIN SERVICE EXCEPTIONS ====================
-
-    @ExceptionHandler(AdminPermissionDeniedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleAdminPermissionDeniedException(
-            AdminPermissionDeniedException ex, ServerWebExchange exchange) {
-        log.warn("Admin permission denied: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(ModerationActionInvalidException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleModerationActionInvalidException(
-            ModerationActionInvalidException ex, ServerWebExchange exchange) {
-        log.error("Invalid moderation action: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(SystemConfigUpdateFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleSystemConfigUpdateFailedException(
-            SystemConfigUpdateFailedException ex, ServerWebExchange exchange) {
-        log.error("System config update failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    // ==================== ANALYTICS INGEST EXCEPTIONS ====================
-
-    @ExceptionHandler(DuplicateEventException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleDuplicateEventException(
-            DuplicateEventException ex, ServerWebExchange exchange) {
-        log.warn("Duplicate event: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.CONFLICT, exchange);
-    }
-
-    @ExceptionHandler(EventIngestFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleEventIngestFailedException(
-            EventIngestFailedException ex, ServerWebExchange exchange) {
-        log.error("Event ingest failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    @ExceptionHandler(EventSchemaMismatchException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleEventSchemaMismatchException(
-            EventSchemaMismatchException ex, ServerWebExchange exchange) {
-        log.error("Event schema mismatch: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(EventValidationException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleEventValidationException(
-            EventValidationException ex, ServerWebExchange exchange) {
-        log.error("Event validation failed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    // ==================== CS SERVICE EXCEPTIONS ====================
-
-    @ExceptionHandler(AppealNotAllowedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleAppealNotAllowedException(
-            AppealNotAllowedException ex, ServerWebExchange exchange) {
-        log.warn("Appeal not allowed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.FORBIDDEN, exchange);
-    }
-
-    @ExceptionHandler(ReportInvalidException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleReportInvalidException(
-            ReportInvalidException ex, ServerWebExchange exchange) {
-        log.error("Invalid report: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST, exchange);
-    }
-
-    @ExceptionHandler(TicketAlreadyClosedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleTicketAlreadyClosedException(
-            TicketAlreadyClosedException ex, ServerWebExchange exchange) {
-        log.warn("Ticket already closed: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.CONFLICT, exchange);
-    }
-
-    @ExceptionHandler(TicketNotFoundException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleTicketNotFoundException(
-            TicketNotFoundException ex, ServerWebExchange exchange) {
-        log.error("Ticket not found: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.NOT_FOUND, exchange);
-    }
-
-    // ==================== FEED EXCEPTIONS ====================
-
-    @ExceptionHandler(FeedGenerationFailedException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleFeedGenerationFailedException(
-            FeedGenerationFailedException ex, ServerWebExchange exchange) {
-        log.error("Feed generation failed: {}", ex.getMessage(), ex);
-        return buildErrorResponse(ex, HttpStatus.INTERNAL_SERVER_ERROR, exchange);
-    }
-
-    @ExceptionHandler(FeedNotAvailableException.class)
-    public Mono<ResponseEntity<ErrorResponse>> handleFeedNotAvailableException(
-            FeedNotAvailableException ex, ServerWebExchange exchange) {
-        log.error("Feed not available: {}", ex.getMessage());
-        return buildErrorResponse(ex, HttpStatus.SERVICE_UNAVAILABLE, exchange);
-    }
-
-    // ==================== VALIDATION EXCEPTION ====================
 
     @ExceptionHandler(WebExchangeBindException.class)
     public Mono<ResponseEntity<ErrorResponse>> handleWebExchangeBindException(
