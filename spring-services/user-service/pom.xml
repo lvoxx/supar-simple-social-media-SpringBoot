@@ -23,6 +23,10 @@
 		</dependency>
 		<dependency>
 			<groupId>io.github.lvoxx</groupId>
+			<artifactId>common-keys</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
 			<artifactId>redis-starter</artifactId>
 		</dependency>
 		<dependency>

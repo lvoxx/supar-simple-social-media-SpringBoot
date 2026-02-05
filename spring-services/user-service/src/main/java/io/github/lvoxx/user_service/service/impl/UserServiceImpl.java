@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.lvoxx.common_core.exception.model.common_exception.DuplicateResourceException;
 import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+import io.github.lvoxx.common_keys.user_service.UserServiceLockerKeys;
 import io.github.lvoxx.redis_starter.service.LockService;
 import io.github.lvoxx.user_service.dto.CreateUserRequest;
 import io.github.lvoxx.user_service.dto.UpdateUserRequest;
@@ -62,7 +63,7 @@ public class UserServiceImpl implements UserService {
     public Mono<UserDTO> createUser(CreateUserRequest request) {
         log.info("Creating user with username: {}", request.getUsername());
 
-        String lockKey = LOCK_KEY_PREFIX + "create:" + request.getUsername();
+        String lockKey = UserServiceLockerKeys.getUserCreationLockKey(request.getUsername());
 
         return lockService.executeWithLock(lockKey, () -> checkDuplicates(request)
                 .then(Mono.defer(() -> {
@@ -137,7 +138,7 @@ public class UserServiceImpl implements UserService {
     public Mono<UserDTO> updateUser(Long id, UpdateUserRequest request) {
         log.info("Updating user: {}", id);
 
-        String lockKey = LOCK_KEY_PREFIX + "update:" + id;
+        String lockKey = UserServiceLockerKeys.getUserUpdateLockKey(id.toString());
 
         return lockService.executeWithLock(lockKey, () -> userRepository.findById(id)
                 .switchIfEmpty(Mono.error(ResourceNotFoundException.user(id)))
@@ -169,7 +170,7 @@ public class UserServiceImpl implements UserService {
     public Mono<Void> deleteUser(Long id) {
         log.info("Deleting user: {}", id);
 
-        String lockKey = LOCK_KEY_PREFIX + "delete:" + id;
+        String lockKey = UserServiceLockerKeys.getUserDeletionLockKey(id.toString());
 
         return lockService.executeWithLock(lockKey, () -> userRepository.findById(id)
                 .switchIfEmpty(Mono.error(ResourceNotFoundException.user(id)))
