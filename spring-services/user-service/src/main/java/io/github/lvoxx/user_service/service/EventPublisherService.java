@@ -1,5 +1,6 @@
 package io.github.lvoxx.user_service.service;
 
+import io.github.lvoxx.user_service.event.ElasticsearchSyncEvent;
 import io.github.lvoxx.user_service.event.UserEvent;
 import reactor.core.publisher.Mono;
 
