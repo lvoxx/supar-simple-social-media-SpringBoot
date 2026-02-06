@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import org.springframework.boot.webflux.autoconfigure.WebFluxProperties.Apiversion.Use;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.lvoxx.common_core.exception.model.common_exception.DuplicateResourceException;
 import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
+import io.github.lvoxx.common_keys.user_service.UserServiceCacheKeys;
 import io.github.lvoxx.common_keys.user_service.UserServiceLockerKeys;
 import io.github.lvoxx.error_message_starter.message.CustomMessageResolver;
 import io.github.lvoxx.redis_starter.service.LockService;
@@ -58,8 +60,6 @@ public class UserServiceImpl implements UserService {
     private final EventPublisherService eventPublisher;
     private final CustomMessageResolver customMessageResolver;
 
-    private static final String LOCK_KEY_PREFIX = "lock:user:";
-
     @Override
     @Transactional
     public Mono<UserDTO> createUser(CreateUserRequest request) {
@@ -93,7 +93,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "#id")
+    @Cacheable(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.PUT_ID)
     public Mono<UserDTO> getUserById(Long id) {
         log.debug("Getting user by ID: {}", id);
 
@@ -105,7 +105,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "#username")
+    @Cacheable(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.PUT_USERNAME)
     public Mono<UserDTO> getUserByUsername(String username) {
         log.debug("Getting user by username: {}", username);
 
@@ -137,9 +137,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @Caching(put = @CachePut(value = "users", key = "#id"), evict = {
-            @CacheEvict(value = "users", key = "#result.username"),
-            @CacheEvict(value = "users", key = "#result.email")
+    @Caching(put = @CachePut(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.PUT_ID), evict = {
+            @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_USERNAME),
+            @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_EMAIL)
     })
     public Mono<UserDTO> updateUser(Long id, UpdateUserRequest request) {
         log.info("Updating user: {}", id);
@@ -171,8 +171,13 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     @Caching(evict = {
-            @CacheEvict(value = "users", key = "#id"),
-            @CacheEvict(value = "users", allEntries = true) // Clear all user cache on delete
+            @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID),
+            @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, allEntries = UserServiceCacheKeys.EVICT_ALL) // Clear
+                                                                                                               // all
+                                                                                                               // user
+                                                                                                               // cache
+                                                                                                               // on
+                                                                                                               // delete
     })
     public Mono<Void> deleteUser(Long id) {
         log.info("Deleting user: {}", id);
@@ -212,42 +217,42 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> incrementFollowerCount(Long userId) {
         log.debug("Incrementing follower count for user: {}", userId);
         return userRepository.incrementFollowerCount(userId);
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> decrementFollowerCount(Long userId) {
         log.debug("Decrementing follower count for user: {}", userId);
         return userRepository.decrementFollowerCount(userId);
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> incrementFollowingCount(Long userId) {
         log.debug("Incrementing following count for user: {}", userId);
         return userRepository.incrementFollowingCount(userId);
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> decrementFollowingCount(Long userId) {
         log.debug("Decrementing following count for user: {}", userId);
         return userRepository.decrementFollowingCount(userId);
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> incrementPostCount(Long userId) {
         log.debug("Incrementing post count for user: {}", userId);
         return userRepository.incrementPostCount(userId);
     }
 
     @Override
-    @CacheEvict(value = "users", key = "#userId")
+    @CacheEvict(value = UserServiceCacheKeys.USERS_VALUE, key = UserServiceCacheKeys.EVICT_ID)
     public Mono<Void> decrementPostCount(Long userId) {
         log.debug("Decrementing post count for user: {}", userId);
         return userRepository.decrementPostCount(userId);
