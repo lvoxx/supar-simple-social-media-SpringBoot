@@ -6,17 +6,17 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 
 @Configuration
-public class MessageSourceConfig {
+public class ErrorMessageSourceConfig {
 
-    @Bean
-    public MessageSource messageSource() {
-        ReloadableResourceBundleMessageSource ms = new ReloadableResourceBundleMessageSource();
+    @Bean("errorMessageSource")
+    public MessageSource errorMessageSource() {
+        ReloadableResourceBundleMessageSource ms =
+                new ReloadableResourceBundleMessageSource();
 
-        ms.setBasename("classpath:i18n/messages");
+        ms.setBasename("classpath:i18n/errors");
         ms.setDefaultEncoding("UTF-8");
         ms.setUseCodeAsDefaultMessage(true);
         ms.setFallbackToSystemLocale(false);
-
         return ms;
     }
 }
