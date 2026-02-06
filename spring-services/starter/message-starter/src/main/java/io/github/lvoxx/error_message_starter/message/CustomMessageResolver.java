@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 
 @Component
 @RequiredArgsConstructor
-public class MessageResolver {
+public class CustomMessageResolver {
 
     private final MessageSource errorMessageSource;
 
