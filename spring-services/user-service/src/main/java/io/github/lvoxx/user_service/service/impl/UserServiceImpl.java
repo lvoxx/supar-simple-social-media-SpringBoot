@@ -74,7 +74,8 @@ public class UserServiceImpl implements UserService {
 
                     return userRepository.save(user)
                             .flatMap(savedUser -> {
-                                UserPreferences preferences = createDefaultPreferences(savedUser.getId());
+                                UserPreferences preferences = UserPreferences
+                                        .createDefaultPreferences(savedUser.getId());
 
                                 return preferencesRepository.save(preferences)
                                         .then(Mono.just(savedUser));
@@ -149,7 +150,7 @@ public class UserServiceImpl implements UserService {
                 .switchIfEmpty(Mono
                         .error(new ResourceNotFoundException(customMessageResolver.get("user.error.id-not-found", id))))
                 .flatMap(existingUser -> {
-                    Map<String, Object> previousValues = buildPreviousValuesMap(existingUser);
+                    Map<String, Object> previousValues = User.buildPreviousValuesMap(existingUser);
 
                     userMapper.updateEntity(request, existingUser);
                     existingUser.setUpdatedAt(LocalDateTime.now());
@@ -272,38 +273,6 @@ public class UserServiceImpl implements UserService {
                                 ? Mono.error(new DuplicateResourceException(customMessageResolver
                                         .get("user.error.keycloak-user-id-not-found", request.getKeycloakUserId())))
                                 : Mono.empty()));
-    }
-
-    private UserPreferences createDefaultPreferences(Long userId) {
-        return UserPreferences.builder()
-                .userId(userId)
-                .showEmail(false)
-                .showBirthDate(false)
-                .allowTagging(true)
-                .allowMentions(true)
-                .notifyNewFollower(true)
-                .notifyPostLike(true)
-                .notifyComment(true)
-                .notifyMention(true)
-                .notifyMessage(true)
-                .defaultPostVisibility("PUBLIC")
-                .language("en")
-                .timezone("UTC")
-                .theme("LIGHT")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build()
-                .setAsNew();
-    }
-
-    private Map<String, Object> buildPreviousValuesMap(User user) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("displayName", user.getDisplayName());
-        map.put("bio", user.getBio());
-        map.put("location", user.getLocation());
-        map.put("website", user.getWebsite());
-        map.put("isPrivate", user.getIsPrivate());
-        return map;
     }
 
     private Map<String, Object> buildUpdatedFieldsMap(UpdateUserRequest request) {

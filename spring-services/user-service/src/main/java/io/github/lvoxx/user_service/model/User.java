@@ -2,6 +2,8 @@ package io.github.lvoxx.user_service.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.Transient;
@@ -26,72 +28,82 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode(callSuper = false)
 @Table("users")
 public class User implements Persistable<Long> {
-    
+
     @Id
     private Long id;
-    
+
     @Column("keycloak_user_id")
     private String keycloakUserId;
-    
+
     @Column("username")
     private String username;
-    
+
     @Column("email")
     private String email;
-    
+
     @Column("display_name")
     private String displayName;
-    
+
     @Column("bio")
     private String bio;
-    
+
     @Column("avatar_url")
     private String avatarUrl;
-    
+
     @Column("cover_image_url")
     private String coverImageUrl;
-    
+
     @Column("birth_date")
     private LocalDate birthDate;
-    
+
     @Column("location")
     private String location;
-    
+
     @Column("website")
     private String website;
-    
+
     @Column("is_verified")
     private Boolean isVerified;
-    
+
     @Column("is_private")
     private Boolean isPrivate;
-    
+
     @Column("follower_count")
     private Long followerCount;
-    
+
     @Column("following_count")
     private Long followingCount;
-    
+
     @Column("post_count")
     private Long postCount;
-    
+
     @Column("created_at")
     private LocalDateTime createdAt;
-    
+
     @Column("updated_at")
     private LocalDateTime updatedAt;
-    
+
     @Transient
     @Default
     private boolean isNew = false;
-    
+
     @Override
     public boolean isNew() {
         return isNew || id == null;
     }
-    
+
     public User setAsNew() {
         this.isNew = true;
         return this;
+    }
+
+    public static Map<String, Object> buildPreviousValuesMap(User user) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("displayName", user.getDisplayName());
+        map.put("bio", user.getBio());
+        map.put("location", user.getLocation());
+        map.put("website", user.getWebsite());
+        map.put("isPrivate", user.getIsPrivate());
+        return map;
     }
 }
