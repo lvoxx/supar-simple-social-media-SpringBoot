@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import io.github.lvoxx.common_core.exception.model.common_exception.DuplicateResourceException;
 import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
 import io.github.lvoxx.common_keys.user_service.UserServiceLockerKeys;
+import io.github.lvoxx.error_message_starter.message.CustomMessageResolver;
 import io.github.lvoxx.redis_starter.service.LockService;
 import io.github.lvoxx.user_service.dto.CreateUserRequest;
 import io.github.lvoxx.user_service.dto.UpdateUserRequest;
@@ -55,6 +56,7 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final LockService lockService;
     private final EventPublisherService eventPublisher;
+    private final CustomMessageResolver customMessageResolver;
 
     private static final String LOCK_KEY_PREFIX = "lock:user:";
 
@@ -95,7 +97,8 @@ public class UserServiceImpl implements UserService {
         log.debug("Getting user by ID: {}", id);
 
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.user(id)))
+                .switchIfEmpty(Mono
+                        .error(new ResourceNotFoundException(customMessageResolver.get("user.error.id-not-found", id))))
                 .map(userMapper::toDto)
                 .doOnSuccess(dto -> log.debug("User retrieved: {}", dto.getUsername()));
     }
@@ -106,7 +109,8 @@ public class UserServiceImpl implements UserService {
         log.debug("Getting user by username: {}", username);
 
         return userRepository.findByUsername(username)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.userByUsername(username)))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(
+                        customMessageResolver.get("user.error.username-not-found", username))))
                 .map(userMapper::toDto);
     }
 
@@ -115,7 +119,8 @@ public class UserServiceImpl implements UserService {
         log.debug("Getting user by email: {}", email);
 
         return userRepository.findByEmail(email)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.userByEmail(email)))
+                .switchIfEmpty(Mono.error(
+                        new ResourceNotFoundException(customMessageResolver.get("user.error.email-not-found", email))))
                 .map(userMapper::toDto);
     }
 
@@ -125,7 +130,7 @@ public class UserServiceImpl implements UserService {
 
         return userRepository.findByKeycloakUserId(keycloakUserId)
                 .switchIfEmpty(Mono.error(new ResourceNotFoundException(
-                        "User not found with Keycloak ID: " + keycloakUserId)))
+                        customMessageResolver.get("user.error.keycloak-user-id-not-found", keycloakUserId))))
                 .map(userMapper::toDto);
     }
 
@@ -141,7 +146,8 @@ public class UserServiceImpl implements UserService {
         String lockKey = UserServiceLockerKeys.getUserUpdateLockKey(id.toString());
 
         return lockService.executeWithLock(lockKey, () -> userRepository.findById(id)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.user(id)))
+                .switchIfEmpty(Mono
+                        .error(new ResourceNotFoundException(customMessageResolver.get("user.error.id-not-found", id))))
                 .flatMap(existingUser -> {
                     Map<String, Object> previousValues = buildPreviousValuesMap(existingUser);
 
@@ -173,7 +179,8 @@ public class UserServiceImpl implements UserService {
         String lockKey = UserServiceLockerKeys.getUserDeletionLockKey(id.toString());
 
         return lockService.executeWithLock(lockKey, () -> userRepository.findById(id)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.user(id)))
+                .switchIfEmpty(Mono
+                        .error(new ResourceNotFoundException(customMessageResolver.get("user.error.id-not-found", id))))
                 .flatMap(user -> {
                     String username = user.getUsername();
 
@@ -252,15 +259,18 @@ public class UserServiceImpl implements UserService {
     private Mono<Void> checkDuplicates(CreateUserRequest request) {
         return userRepository.existsByUsername(request.getUsername())
                 .flatMap(exists -> exists
-                        ? Mono.error(DuplicateResourceException.username(request.getUsername()))
+                        ? Mono.error(new DuplicateResourceException(
+                                customMessageResolver.get("user.error.username.exists", request.getUsername())))
                         : Mono.empty())
                 .then(userRepository.existsByEmail(request.getEmail())
                         .flatMap(exists -> exists
-                                ? Mono.error(DuplicateResourceException.email(request.getEmail()))
+                                ? Mono.error(new DuplicateResourceException(
+                                        customMessageResolver.get("user.error.email.exists", request.getEmail())))
                                 : Mono.empty()))
                 .then(userRepository.existsByKeycloakUserId(request.getKeycloakUserId())
                         .flatMap(exists -> exists
-                                ? Mono.error(DuplicateResourceException.keycloakUserId(request.getKeycloakUserId()))
+                                ? Mono.error(new DuplicateResourceException(customMessageResolver
+                                        .get("user.error.keycloak-user-id-not-found", request.getKeycloakUserId())))
                                 : Mono.empty()));
     }
 
