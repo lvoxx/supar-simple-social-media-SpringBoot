@@ -230,6 +230,7 @@ sequenceDiagram
 | Search Service | Search users/posts | Elasticsearch |
 | AI Service | Recommendation, moderation | Redis |
 | Admin Service | Developer dashboard | Cassandra |
+| CS Service | Customer Service | Postgres |
 
 ---
 
