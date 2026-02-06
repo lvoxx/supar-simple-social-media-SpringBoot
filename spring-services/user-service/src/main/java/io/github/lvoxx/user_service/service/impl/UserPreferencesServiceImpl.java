@@ -82,25 +82,7 @@ public class UserPreferencesServiceImpl implements UserPreferencesService {
     public Mono<UserPreferencesDTO> createDefaultPreferences(Long userId) {
         log.info("Creating default preferences for user: {}", userId);
         
-        UserPreferences preferences = UserPreferences.builder()
-            .userId(userId)
-            .showEmail(false)
-            .showBirthDate(false)
-            .allowTagging(true)
-            .allowMentions(true)
-            .notifyNewFollower(true)
-            .notifyPostLike(true)
-            .notifyComment(true)
-            .notifyMention(true)
-            .notifyMessage(true)
-            .defaultPostVisibility("PUBLIC")
-            .language("en")
-            .timezone("UTC")
-            .theme("LIGHT")
-            .createdAt(LocalDateTime.now())
-            .updatedAt(LocalDateTime.now())
-            .build()
-            .setAsNew();
+        UserPreferences preferences = UserPreferences.createDefaultPreferences(userId);
         
         return preferencesRepository.save(preferences)
             .map(userMapper::toDto)
