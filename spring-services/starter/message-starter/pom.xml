@@ -11,9 +11,9 @@
 	</parent>
 
 	<groupId>io.github.lvoxx</groupId>
-	<artifactId>error-message-starter</artifactId>
+	<artifactId>message-starter</artifactId>
 	<version>1.0.0</version>
-	<name>error-message-starter</name>
+	<name>message-starter</name>
 	<description>Error Message Module</description>
 
 	<dependencies>

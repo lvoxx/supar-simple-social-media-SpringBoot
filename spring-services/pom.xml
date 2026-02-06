@@ -61,7 +61,7 @@
 		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
-		<error-message-starter.version>1.0.0</error-message-starter.version>
+		<message-starter.version>1.0.0</message-starter.version>
 		<user-service.version>1.0.0</user-service.version>
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
@@ -80,7 +80,7 @@
 		<module>common/common-core</module>
 		<module>common/common-keys</module>
 		<module>starter/cloudinary-starter</module>
-		<module>starter/error-message-starter</module>
+		<module>starter/message-starter</module>
 		<module>starter/kafka-consumer-starter</module>
 		<module>starter/kafka-producer-starter</module>
 		<module>starter/postgres-starter</module>
@@ -123,8 +123,8 @@
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
-				<artifactId>error-message-starter</artifactId>
-				<version>${error-message-starter.version}</version>
+				<artifactId>message-starter</artifactId>
+				<version>${message-starter.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
