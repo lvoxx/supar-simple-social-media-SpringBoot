@@ -5,7 +5,7 @@ import reactor.core.publisher.Mono;
 /**
  * Service interface for image upload operations.
  */
-public interface ImageUploadService {
+public interface UserImageService {
     
     /**
      * Upload avatar image to Cloudinary.

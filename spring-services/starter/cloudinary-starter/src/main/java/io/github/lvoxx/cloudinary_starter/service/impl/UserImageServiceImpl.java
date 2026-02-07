@@ -1,4 +1,4 @@
-package io.github.lvoxx.cloudinary_starter.properties.impl;
+package io.github.lvoxx.cloudinary_starter.service.impl;
 
 import java.util.Map;
 
@@ -10,7 +10,7 @@ import com.cloudinary.EagerTransformation;
 import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
-import io.github.lvoxx.cloudinary_starter.service.ImageUploadService;
+import io.github.lvoxx.cloudinary_starter.service.UserImageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -26,7 +26,7 @@ import reactor.core.scheduler.Schedulers;
 @Service
 @RequiredArgsConstructor
 @SuppressWarnings("unchecked")
-public class ImageUploadServiceImpl implements ImageUploadService {
+public class UserImageServiceImpl implements UserImageService {
 
     private final Cloudinary cloudinary;
 
