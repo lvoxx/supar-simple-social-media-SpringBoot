@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import io.github.lvoxx.common_core.exception.model.common_exception.ResourceNotFoundException;
 import io.github.lvoxx.common_keys.user_service.UserPreferencesServiceLockerKeys;
+import io.github.lvoxx.error_message_starter.message.CustomMessageResolver;
 import io.github.lvoxx.redis_starter.service.LockService;
 import io.github.lvoxx.user_service.dto.UserPreferencesDTO;
 import io.github.lvoxx.user_service.event.UserPreferencesUpdatedEvent;
@@ -38,6 +39,7 @@ public class UserPreferencesServiceImpl implements UserPreferencesService {
     private final UserMapper userMapper;
     private final LockService lockService;
     private final EventPublisherService eventPublisher;
+    private final CustomMessageResolver customMessageResolver;
 
     @Override
     @Cacheable(value = "preferences", key = "#userId")
@@ -45,7 +47,8 @@ public class UserPreferencesServiceImpl implements UserPreferencesService {
         log.debug("Getting preferences for user: {}", userId);
 
         return preferencesRepository.findByUserId(userId)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.preferences(userId)))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(
+                        customMessageResolver.get("user.preferences.error.id-not-found", userId))))
                 .map(userMapper::toDto);
     }
 
@@ -58,9 +61,11 @@ public class UserPreferencesServiceImpl implements UserPreferencesService {
         String lockKey = UserPreferencesServiceLockerKeys.getUserPreferencesUpdateLockKey(userId);
 
         return lockService.executeWithLock(lockKey, () -> userRepository.findById(userId)
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.user(userId)))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(
+                        customMessageResolver.get("user.error.id-not-found", userId))))
                 .then(preferencesRepository.findByUserId(userId))
-                .switchIfEmpty(Mono.error(ResourceNotFoundException.preferences(userId)))
+                .switchIfEmpty(Mono.error(new ResourceNotFoundException(
+                        customMessageResolver.get("user.preferences.error.id-not-found", userId))))
                 .flatMap(existing -> {
                     userMapper.updateEntity(preferencesDTO, existing);
                     existing.setUpdatedAt(LocalDateTime.now());

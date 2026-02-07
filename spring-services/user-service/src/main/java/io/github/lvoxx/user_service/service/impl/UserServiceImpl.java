@@ -37,16 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * UserService implementation with declarative caching via Spring Cache
- * annotations.
- * 
- * Cache strategy:
- * - @Cacheable: Cache the result on read (getUserById, getUserByUsername, etc.)
- * - @CachePut: Update cache after write (updateUser)
- * - @CacheEvict: Invalidate cache on delete or counter updates
- * - Cache name: "users", key: user ID
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor
