@@ -3,3 +3,4 @@ cloudinary:
   api-key: ${CLOUDINARY_API_KEY}
   api-secret: ${CLOUDINARY_API_SECRET}
   secure: true
+  default-avatar-url: ${CLOUDINARY_DEFAULT_AVATAR_URL:https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg}

@@ -7,5 +7,6 @@ public record CloudinaryProperties(
         String cloudName,
         String apiKey,
         String apiSecret,
-        boolean secure
+        boolean secure,
+        String defaultAvatarUrl
 ) {}
