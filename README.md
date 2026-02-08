@@ -223,7 +223,7 @@ sequenceDiagram
 | API Gateway | Routing, rate limit, auth | — |
 | User Service | Profile, privacy, settings | PostgreSQL |
 | Post Service | Create/edit posts | PostgreSQL |
-| Feed Service | Timelines, feeds | Cassandra, Redis |
+| Feed Service | Timelines, feeds | Cassandra, Redis, RecSys |
 | Social Graph Service | Follow relationships | Cassandra |
 | Messaging Service | Chat & conversations | Cassandra |
 | Notification Service | Push & in-app notify | Redis, Kafka |
