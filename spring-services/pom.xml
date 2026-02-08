@@ -62,6 +62,7 @@
 		<message-starter.version>1.0.0</message-starter.version>
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
+		<post-service.version>1.0.0</post-service.version>
 		<user-service.version>1.0.0</user-service.version>
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
@@ -85,6 +86,7 @@
 		<module>starter/message-starter</module>
 		<module>starter/postgres-starter</module>
 		<module>starter/redis-starter</module>
+		<module>post-service</module>
 		<module>user-service</module>
 	</modules>
 
@@ -135,6 +137,11 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>kafka-consumer-starter</artifactId>
 				<version>${kafka-consumer-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>post-service</artifactId>
+				<version>${post-service.version}</version>
 			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->

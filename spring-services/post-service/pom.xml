@@ -4,18 +4,44 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>4.0.2</version>
-		<relativePath /> <!-- lookup parent from repository -->
+		<groupId>io.github.lvoxx</groupId>
+		<artifactId>spring-services</artifactId>
+		<version>1.0.0</version>
+		<relativePath>../pom.xml</relativePath>
 	</parent>
+
 	<groupId>io.github.lvoxx</groupId>
 	<artifactId>post-service</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.0</version>
 	<name>post-service</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Post Service for Supar Simple Social Media Application</description>
 
 	<dependencies>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>common-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>common-keys</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>redis-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>kafka-producer-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>message-starter</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>cloudinary-starter</artifactId>
+		</dependency>
+
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-micrometer-tracing-brave</artifactId>
