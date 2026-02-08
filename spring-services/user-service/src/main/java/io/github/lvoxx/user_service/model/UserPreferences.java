@@ -116,6 +116,8 @@ public class UserPreferences implements Persistable<Long> {
                 .language("en")
                 .timezone("UTC")
                 .theme("LIGHT")
+                .avatarUrl(null)
+                .coverImageUrl(null)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build()
