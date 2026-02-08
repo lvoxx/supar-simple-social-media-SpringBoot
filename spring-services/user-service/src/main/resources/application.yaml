@@ -1,7 +1,27 @@
 spring:
   application:
     name: user-service
+---
+# Application Configuration
+app:
+  cache:
+    user-profile-ttl: 3600 # 1 hour
+    user-preferences-ttl: 7200 # 2 hours
 
+  kafka:
+    topics:
+      user-events: user.events
+      user-profile-updated: user.profile.updated
+      elasticsearch-sync: elasticsearch.sync
+
+  elasticsearch:
+    sync-enabled: true
+
+  lock:
+    wait-time: 3000 # ms
+    lease-time: 10000 # ms
+
+---
 management:
   tracing:
     sampling:

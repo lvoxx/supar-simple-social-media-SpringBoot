@@ -1,11 +1,24 @@
 spring:
   application:
     name: post-service
-
+---
+app:
+  kafka:
+    topics:
+      post-events: post.events
+      user-post-count: user.post.count
+  cache:
+    post-ttl: 1800
+  content:
+    max-text-length: 2000
+    max-image-size: 10485760 # 10MB
+    max-video-size: 52428800 # 50MB
+    max-video-duration: 120 # 2 minutes
+---
 management:
   tracing:
     sampling:
-      probability: 1.0   # 100% trace (dev), prod nên 0.1
+      probability: 1.0 # 100% trace (dev), prod nên 0.1
 
   otlp:
     tracing:
