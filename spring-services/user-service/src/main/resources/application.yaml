@@ -5,11 +5,11 @@ spring:
 management:
   tracing:
     sampling:
-      probability: 1.0   # 100% trace (dev), prod nên 0.1
+      probability: 1.0 # 100% trace (dev), prod nên 0.1
 
   otlp:
     tracing:
-      endpoint: http://localhost:9411/api/v2/spans
+      endpoint: ${OTLP_ENDPOINT:http://localhost:9411/api/v2/spans}
       transport: http
       timeout: 10s
 
