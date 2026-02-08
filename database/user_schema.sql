@@ -68,6 +68,8 @@ CREATE TABLE user_preferences (
     language VARCHAR(10) DEFAULT 'en' NOT NULL,
     timezone VARCHAR(50) DEFAULT 'UTC' NOT NULL,
     theme VARCHAR(20) DEFAULT 'LIGHT' NOT NULL,
+    avatar_url VARCHAR(500) DEFAULT 'https://res.cloudinary.com/demo/image/upload/sample.jpg',
+    cover_image_url VARCHAR(500) DEFAULT 'https://res.cloudinary.com/demo/image/upload/landscape.jpg',
     
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,

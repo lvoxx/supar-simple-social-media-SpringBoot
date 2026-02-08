@@ -74,6 +74,12 @@ public class UserPreferences implements Persistable<Long> {
     @Column("theme")
     private String theme;
 
+    @Column("avatar_url")
+    private String avatarUrl;
+
+    @Column("cover_image_url")
+    private String coverImageUrl;
+
     @Column("created_at")
     private LocalDateTime createdAt;
 
