@@ -57,12 +57,13 @@
 		<cloudinary-starter.version>1.0.0</cloudinary-starter.version>
 		<common-core.version>1.0.0</common-core.version>
 		<common-keys.version>1.0.0</common-keys.version>
+		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
 		<kafka-consumer-starter.version>1.0.0</kafka-consumer-starter.version>
 		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
 		<message-starter.version>1.0.0</message-starter.version>
+		<post-service.version>1.0.0</post-service.version>
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
-		<post-service.version>1.0.0</post-service.version>
 		<user-service.version>1.0.0</user-service.version>
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
@@ -81,13 +82,14 @@
 	<modules>
 		<module>common/common-core</module>
 		<module>common/common-keys</module>
+		<module>post-service</module>
 		<module>starter/cloudinary-starter</module>
+		<module>starter/elasticsearch-starter</module>
 		<module>starter/kafka-consumer-starter</module>
 		<module>starter/kafka-producer-starter</module>
 		<module>starter/message-starter</module>
 		<module>starter/postgres-starter</module>
 		<module>starter/redis-starter</module>
-		<module>post-service</module>
 		<module>user-service</module>
 	</modules>
 
@@ -143,6 +145,11 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>post-service</artifactId>
 				<version>${post-service.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>elasticsearch-starter</artifactId>
+				<version>${elasticsearch-starter.version}</version>
 			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->

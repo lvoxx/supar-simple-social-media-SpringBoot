@@ -1,0 +1,12 @@
+spring:
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URIS}
+    username: ${ELASTICSEARCH_USERNAME}
+    password: ${ELASTICSEARCH_PASSWORD}
+    connection-timeout: 10s
+    socket-timeout: 60s
+
+management:
+  health:
+    elasticsearch:
+      enabled: true
