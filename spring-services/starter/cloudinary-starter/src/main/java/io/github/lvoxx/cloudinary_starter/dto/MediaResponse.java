@@ -1,6 +1,5 @@
 package io.github.lvoxx.cloudinary_starter.dto;
 
-import io.github.lvoxx.postservice.domain.entity.PostMedia.MediaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
