@@ -2,6 +2,7 @@ package io.github.lvoxx.post_service.dto;
 
 import java.util.List;
 
+import io.github.lvoxx.cloudinary_starter.dto.MediaUploadRequest;
 import io.github.lvoxx.post_service.model.Post.AllowedCommenters;
 import io.github.lvoxx.post_service.model.Post.PostVisibility;
 import jakarta.validation.constraints.NotBlank;
@@ -11,6 +12,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 /**
  * Request DTO for creating a new post.
@@ -26,6 +28,7 @@ import lombok.NoArgsConstructor;
  * </ul>
  */
 @Data
+@ToString(exclude = "content") // Avoid logging full content in toString
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
