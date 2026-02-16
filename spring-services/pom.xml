@@ -74,6 +74,10 @@
 		<lombok.version>1.18.42</lombok.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<redis.version>4.1.0</redis.version>
+		<tika-core.version>3.2.3</tika-core.version>
+		<avro.version>1.12.1</avro.version>
+		<axon-spring-boot.version>4.10.0</axon-spring-boot.version>
+		<kafka-avro-serializer.version>8.1.1</kafka-avro-serializer.version>
 		<cloudinary.version>1.39.0</cloudinary.version>
 		<kafka-streams.version>4.1.1</kafka-streams.version>
 		<swagger-annotation.version>2.2.42</swagger-annotation.version>
@@ -277,6 +281,31 @@
 				<groupId>org.mapstruct</groupId>
 				<artifactId>mapstruct</artifactId>
 				<version>${mapstruct.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.tika</groupId>
+				<artifactId>tika-core</artifactId>
+				<version>${tika-core.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.apache.avro</groupId>
+				<artifactId>avro</artifactId>
+				<version>${avro.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.confluent</groupId>
+				<artifactId>kafka-avro-serializer</artifactId>
+				<version>${kafka-avro-serializer.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.axonframework</groupId>
+				<artifactId>axon-spring-boot-starter</artifactId>
+				<version>${axon-spring-boot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.axonframework.extensions.kafka</groupId>
+				<artifactId>axon-kafka-spring-boot-starter</artifactId>
+				<version>${axon-spring-boot.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.projectlombok</groupId>
