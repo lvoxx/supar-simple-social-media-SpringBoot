@@ -60,6 +60,7 @@
 		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
 		<kafka-consumer-starter.version>1.0.0</kafka-consumer-starter.version>
 		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
+		<media-service.version>1.0.0</media-service.version>
 		<message-starter.version>1.0.0</message-starter.version>
 		<post-service.version>1.0.0</post-service.version>
 		<postgres-starter.version>1.0.0</postgres-starter.version>
@@ -82,6 +83,7 @@
 	<modules>
 		<module>common/common-core</module>
 		<module>common/common-keys</module>
+		<module>media-service</module>
 		<module>post-service</module>
 		<module>starter/cloudinary-starter</module>
 		<module>starter/elasticsearch-starter</module>
@@ -100,6 +102,11 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>user-service</artifactId>
 				<version>${user-service.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>media-service</artifactId>
+				<version>${media-service.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
