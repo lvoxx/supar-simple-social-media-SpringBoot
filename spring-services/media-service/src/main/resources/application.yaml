@@ -1,0 +1,134 @@
+spring:
+  application:
+    name: media-service
+  
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mediadb}
+    username: ${DB_USER:mediauser}
+    password: ${DB_PASSWORD:mediapass}
+    pool:
+      initial-size: 10
+      max-size: 50
+      max-idle-time: 30m
+  
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 20
+          max-idle: 10
+          min-idle: 5
+  
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
+      acks: all
+      retries: 3
+      properties:
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+    consumer:
+      group-id: media-service
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
+      properties:
+        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
+        specific.avro.reader: true
+      auto-offset-reset: earliest
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+cloudinary:
+  cloud-name: ${CLOUDINARY_CLOUD_NAME:your-cloud-name}
+  api-key: ${CLOUDINARY_API_KEY:your-api-key}
+  api-secret: ${CLOUDINARY_API_SECRET:your-api-secret}
+  secure: true
+
+media:
+  upload:
+    max-size-image: 52428800
+    max-size-video: 524288000
+    max-size-attachment: 104857600
+    allowed-image-formats: jpg,jpeg,png,gif,webp,heic
+    allowed-video-formats: mp4,mov,avi,mkv,webm
+    allowed-attachment-formats: pdf,doc,docx,xls,xlsx,ppt,pptx,txt
+  
+  variants:
+    image:
+      thumb: 150x150
+      small: 320x320
+      medium: 640x640
+      large: 1080x1080
+    video:
+      stream: 720p
+  
+  url:
+    ttl: 60
+    signature-secret: ${URL_SIGNATURE_SECRET:change-me-in-production}
+
+rate-limit:
+  view:
+    capacity: 200
+    refill-tokens: 200
+    refill-duration: 60
+  original:
+    capacity: 40
+    refill-tokens: 40
+    refill-duration: 60
+  upload:
+    capacity: 20
+    refill-tokens: 20
+    refill-duration: 60
+
+integration:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
+    timeout: 5000
+  group-service:
+    url: ${GROUP_SERVICE_URL:http://localhost:8082}
+    timeout: 5000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      userService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+      groupService:
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+  
+  retry:
+    instances:
+      cloudinary:
+        max-attempts: 3
+        wait-duration: 1000
+        exponential-backoff-multiplier: 2
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  level:
+    root: INFO
+    com.socialmedia.media: DEBUG
+    org.axonframework: INFO

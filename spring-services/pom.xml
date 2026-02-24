@@ -62,7 +62,6 @@
 		<spring-context.version>7.0.3</spring-context.version>
 
 		<!-- INTERNAL MODULE VERSIONS -->
-		<cloudinary-starter.version>1.0.0</cloudinary-starter.version>
 		<common-core.version>1.0.0</common-core.version>
 		<common-keys.version>1.0.0</common-keys.version>
 		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
@@ -97,7 +96,6 @@
 		<module>common/common-keys</module>
 		<module>media-service</module>
 		<module>post-service</module>
-		<module>starter/cloudinary-starter</module>
 		<module>starter/elasticsearch-starter</module>
 		<module>starter/kafka-consumer-starter</module>
 		<module>starter/kafka-producer-starter</module>
@@ -134,11 +132,6 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>postgres-starter</artifactId>
 				<version>${postgres-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>cloudinary-starter</artifactId>
-				<version>${cloudinary-starter.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
