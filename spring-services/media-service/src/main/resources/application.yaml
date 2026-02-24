@@ -1,24 +1,6 @@
 spring:
   application:
     name: media-service
-  
-  kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-      acks: all
-      retries: 3
-      properties:
-        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
-    consumer:
-      group-id: media-service
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-      properties:
-        schema.registry.url: ${SCHEMA_REGISTRY_URL:http://localhost:8081}
-        specific.avro.reader: true
-      auto-offset-reset: earliest
 
   servlet:
     multipart:
@@ -39,7 +21,7 @@ media:
     allowed-image-formats: jpg,jpeg,png,gif,webp,heic
     allowed-video-formats: mp4,mov,avi,mkv,webm
     allowed-attachment-formats: pdf,doc,docx,xls,xlsx,ppt,pptx,txt
-  
+
   variants:
     image:
       thumb: 150x150
@@ -48,7 +30,7 @@ media:
       large: 1080x1080
     video:
       stream: 720p
-  
+
   url:
     ttl: 60
     signature-secret: ${URL_SIGNATURE_SECRET:change-me-in-production}
@@ -74,37 +56,6 @@ integration:
   group-service:
     url: ${GROUP_SERVICE_URL:http://localhost:8082}
     timeout: 5000
-
-resilience4j:
-  circuitbreaker:
-    instances:
-      userService:
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 10000
-      groupService:
-        sliding-window-size: 10
-        minimum-number-of-calls: 5
-        failure-rate-threshold: 50
-        wait-duration-in-open-state: 10000
-  
-  retry:
-    instances:
-      cloudinary:
-        max-attempts: 3
-        wait-duration: 1000
-        exponential-backoff-multiplier: 2
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,metrics,prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
 
 logging:
   level:
