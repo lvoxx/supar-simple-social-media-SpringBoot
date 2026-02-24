@@ -46,6 +46,14 @@
 		<url>https://github.com/lvoxx</url>
 	</scm>
 
+	<repositories>
+		<repository>
+			<id>confluent</id>
+			<url>https://packages.confluent.io/maven/</url>
+		</repository>
+	</repositories>
+
+
 	<properties>
 		<!-- CORE VERSION -->
 		<java.version>25</java.version>
