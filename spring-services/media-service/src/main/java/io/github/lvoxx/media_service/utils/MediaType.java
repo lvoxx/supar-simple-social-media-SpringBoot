@@ -1,5 +1,8 @@
-package io.github.lvoxx.media_service.model;
+package io.github.lvoxx.media_service.utils;
 
+import lombok.ToString;
+
+@ToString
 public enum MediaType {
     IMAGE,
     VIDEO,

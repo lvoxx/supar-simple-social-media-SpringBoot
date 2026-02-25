@@ -1,6 +1,9 @@
 package io.github.lvoxx.media_service.model;
 
+import java.time.Instant;
 import java.util.UUID;
+
+import javax.management.relation.RelationType;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Column;
@@ -15,22 +18,21 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("media_original")
-public class MediaOriginal {
+@Table("media_acl")
+public class MediaAcl {
 
     @Id
+    private UUID id;
+
     @Column("media_id")
     private UUID mediaId;
 
-    @Column("cloudinary_public_id")
-    private String cloudinaryPublicId;
+    @Column("allowed_user_id")
+    private String allowedUserId;
 
-    @Column("secure_url")
-    private String secureUrl;
+    @Column("relation_type")
+    private RelationType relationType;
 
-    @Column("resource_type")
-    private String resourceType;
-
-    @Column("signature")
-    private String signature;
+    @Column("created_at")
+    private Instant createdAt;
 }
