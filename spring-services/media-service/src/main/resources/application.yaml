@@ -49,14 +49,6 @@ rate-limit:
     refill-tokens: 20
     refill-duration: 60
 
-integration:
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
-    timeout: 5000
-  group-service:
-    url: ${GROUP_SERVICE_URL:http://localhost:8082}
-    timeout: 5000
-
 logging:
   level:
     root: INFO

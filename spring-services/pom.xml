@@ -64,6 +64,7 @@
 		<!-- INTERNAL MODULE VERSIONS -->
 		<common-core.version>1.0.0</common-core.version>
 		<common-keys.version>1.0.0</common-keys.version>
+		<common-integration.version>1.0.0</common-integration.version>
 		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
 		<kafka-consumer-starter.version>1.0.0</kafka-consumer-starter.version>
 		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
@@ -94,6 +95,7 @@
 	<modules>
 		<module>common/common-core</module>
 		<module>common/common-keys</module>
+		<module>common/common-integration</module>
 		<module>media-service</module>
 		<module>post-service</module>
 		<module>starter/elasticsearch-starter</module>
@@ -127,6 +129,11 @@
 				<groupId>io.github.lvoxx</groupId>
 				<artifactId>common-keys</artifactId>
 				<version>${common-keys.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>common-integration</artifactId>
+				<version>${common-integration.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>

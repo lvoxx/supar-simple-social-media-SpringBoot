@@ -1,0 +1,7 @@
+integration:
+  user-service:
+    url: ${USER_SERVICE_URL:http://user-service:8080}
+    timeout: 5000
+  post-service:
+    url: ${POST_SERVICE_URL:http://post-service:8080}
+    timeout: 5000
