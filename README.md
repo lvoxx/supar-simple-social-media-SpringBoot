@@ -72,24 +72,24 @@ See [ARCHITECTURE.md](./ARCHITECTURE.md) for the complete architecture document.
 
 | Service | Port | Database | Description |
 |---------|------|----------|-------------|
-| [user-service](./services/user-service.md) | 8081 | PostgreSQL | User profiles, followers, settings, Keycloak sync |
-| [media-service](./services/media-service.md) | 8082 | PostgreSQL + Cloudinary | Media upload/processing/CDN |
-| [post-service](./services/post-service.md) | 8083 | PostgreSQL | Posts, likes, reposts, bookmarks, feeds |
-| [comment-service](./services/comment-service.md) | 8084 | Cassandra | Nested comments, high write throughput |
-| [notification-service](./services/notification-service.md) | 8085 | Cassandra | Real-time push, multi-device sync |
-| [search-service](./services/search-service.md) | 8086 | Elasticsearch | Full-text search, trending, autocomplete |
-| [group-service](./services/group-service.md) | 8087 | PostgreSQL | Groups, membership, roles, pinned posts, join screening |
-| [private-message-service](./services/private-message-service.md) | 8088 | Cassandra | DM & group chat, reactions, forwarding, real-time WebSocket |
-| [message-notification-service](./services/message-notification-service.md) | 8089 | Cassandra | Push notifications for messages (FCM, APNs, Web Push) |
+| [user-service](./documents/user-service.md) | 8081 | PostgreSQL | User profiles, followers, settings, Keycloak sync |
+| [media-service](./documents/media-service.md) | 8082 | PostgreSQL + Cloudinary | Media upload/processing/CDN |
+| [post-service](./documents/post-service.md) | 8083 | PostgreSQL | Posts, likes, reposts, bookmarks, feeds |
+| [comment-service](./documents/comment-service.md) | 8084 | Cassandra | Nested comments, high write throughput |
+| [notification-service](./documents/notification-service.md) | 8085 | Cassandra | Real-time push, multi-device sync |
+| [search-service](./documents/search-service.md) | 8086 | Elasticsearch | Full-text search, trending, autocomplete |
+| [group-service](./documents/group-service.md) | 8087 | PostgreSQL | Groups, membership, roles, pinned posts, join screening |
+| [private-message-service](./documents/private-message-service.md) | 8088 | Cassandra | DM & group chat, reactions, forwarding, real-time WebSocket |
+| [message-notification-service](./documents/message-notification-service.md) | 8089 | Cassandra | Push notifications for messages (FCM, APNs, Web Push) |
 
 ### FastAPI (Python) AI Services
 
 | Service | Port | Description |
 |---------|------|-------------|
-| [post-guard-service](./services/post-guard-service.md) | 8090 | Content moderation (spam, phishing, TOS) |
-| [media-guard-service](./services/media-guard-service.md) | 8091 | Media safety: NSFW, malware, deepfake detection |
-| [user-analysis-service](./services/user-analysis-service.md) | 8092 | User behavior analysis, bot detection, recommendations |
-| [ai-dashboard-service](./services/ai-dashboard-service.md) | 8093 | Admin AI dashboard, moderation queue |
+| [post-guard-service](./documents/post-guard-service.md) | 8090 | Content moderation (spam, phishing, TOS) |
+| [media-guard-service](./documents/media-guard-service.md) | 8091 | Media safety: NSFW, malware, deepfake detection |
+| [user-analysis-service](./documents/user-analysis-service.md) | 8092 | User behavior analysis, bot detection, recommendations |
+| [ai-dashboard-service](./documents/ai-dashboard-service.md) | 8093 | Admin AI dashboard, moderation queue |
 
 ---
 
@@ -244,19 +244,19 @@ ArgoCD watches the `infrastructure/helm/charts/` directory. On new image tag com
 |----------|-------------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Full system architecture, data flows, HA design |
 | [CONVENTIONS.md](./CONVENTIONS.md) | Coding conventions, naming rules, Git workflow |
-| [services/user-service.md](./services/user-service.md) | user-service deep-dive |
-| [services/media-service.md](./services/media-service.md) | media-service deep-dive |
-| [services/post-service.md](./services/post-service.md) | post-service deep-dive |
-| [services/comment-service.md](./services/comment-service.md) | comment-service deep-dive |
-| [services/notification-service.md](./services/notification-service.md) | notification-service deep-dive |
-| [services/search-service.md](./services/search-service.md) | search-service deep-dive |
-| [services/group-service.md](./services/group-service.md) | group-service deep-dive |
-| [services/private-message-service.md](./services/private-message-service.md) | private-message-service deep-dive |
-| [services/message-notification-service.md](./services/message-notification-service.md) | message-notification-service deep-dive |
-| [services/post-guard-service.md](./services/post-guard-service.md) | post-guard FastAPI AI service |
-| [services/media-guard-service.md](./services/media-guard-service.md) | media-guard FastAPI AI service |
-| [services/user-analysis-service.md](./services/user-analysis-service.md) | user analysis FastAPI AI service |
-| [services/ai-dashboard-service.md](./services/ai-dashboard-service.md) | AI admin dashboard FastAPI service |
+| [documents/user-service.md](./documents/user-service.md) | user-service deep-dive |
+| [documents/media-service.md](./documents/media-service.md) | media-service deep-dive |
+| [documents/post-service.md](./documents/post-service.md) | post-service deep-dive |
+| [documents/comment-service.md](./documents/comment-service.md) | comment-service deep-dive |
+| [documents/notification-service.md](./documents/notification-service.md) | notification-service deep-dive |
+| [documents/search-service.md](./documents/search-service.md) | search-service deep-dive |
+| [documents/group-service.md](./documents/group-service.md) | group-service deep-dive |
+| [documents/private-message-service.md](./documents/private-message-service.md) | private-message-service deep-dive |
+| [documents/message-notification-service.md](./documents/message-notification-service.md) | message-notification-service deep-dive |
+| [documents/post-guard-service.md](./documents/post-guard-service.md) | post-guard FastAPI AI service |
+| [documents/media-guard-service.md](./documents/media-guard-service.md) | media-guard FastAPI AI service |
+| [documents/user-analysis-service.md](./documents/user-analysis-service.md) | user analysis FastAPI AI service |
+| [documents/ai-dashboard-service.md](./documents/ai-dashboard-service.md) | AI admin dashboard FastAPI service |
 | [modules/common-core.md](./modules/common-core.md) | common-core module reference |
 | [modules/starters.md](./modules/starters.md) | All starters reference |
 
