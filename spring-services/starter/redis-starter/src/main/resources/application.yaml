@@ -31,3 +31,17 @@ redisson:
       retryInterval: 1500
     threads: 16
     nettyThreads: 32
+
+rate-limit:
+  view:
+    capacity: 200
+    refill-tokens: 200
+    refill-duration: 60
+  original:
+    capacity: 40
+    refill-tokens: 40
+    refill-duration: 60
+  upload:
+    capacity: 20
+    refill-tokens: 20
+    refill-duration: 60

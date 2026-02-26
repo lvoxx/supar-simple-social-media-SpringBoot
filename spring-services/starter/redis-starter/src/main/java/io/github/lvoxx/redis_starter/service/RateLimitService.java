@@ -1,6 +1,7 @@
 package io.github.lvoxx.redis_starter.service;
 
 import java.time.Duration;
+import java.util.Map;
 
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class RateLimitService {
 
     private static final String RATE_LIMIT_PREFIX = "rate-limit:";
 
-    public Mono<Boolean> checkRateLimit(String key, RateLimitType.MediaService type) {
+    public Mono<Boolean> checkMediaRateLimit(String key, RateLimitType.MediaService type) {
         RateLimitConfig.RateLimitSettings settings = getMediaServiceSettings(type);
         String redisKey = RATE_LIMIT_PREFIX + type.name().toLowerCase() + ":" + key;
 
@@ -46,11 +47,11 @@ public class RateLimitService {
     }
 
     private RateLimitConfig.RateLimitSettings getMediaServiceSettings(RateLimitType.MediaService type) {
-        return switch (type) {
-            case VIEW -> rateLimitConfig.getView();
-            case ORIGINAL -> rateLimitConfig.getOriginal();
-            case UPLOAD -> rateLimitConfig.getUpload();
-        };
+        Map<RateLimitType.MediaService, RateLimitConfig.RateLimitSettings> settingsMap = Map.of(
+                RateLimitType.MediaService.VIEW, rateLimitConfig.getView(),
+                RateLimitType.MediaService.ORIGINAL, rateLimitConfig.getOriginal(),
+                RateLimitType.MediaService.UPLOAD, rateLimitConfig.getUpload());
+        return settingsMap.get(type);
     }
 
 }
