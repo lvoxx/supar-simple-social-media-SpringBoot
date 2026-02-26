@@ -470,38 +470,38 @@ podAntiAffinity:
 
 ## 1️⃣ Infrastructure Layer
 
-| Component | Type | Replicas / Notes |
-|------------|------|-----------------|
-| kafka-0,1,2 | StatefulSet | 3 brokers |
-| cassandra-0,1,2 | StatefulSet | 3 nodes |
-| elasticsearch-0,1,2 | StatefulSet | 3 nodes |
-| redis-0 | StatefulSet | Primary |
-| redis-1,2 | StatefulSet | Replicas |
-| postgresql-primary | StatefulSet | Primary |
-| postgresql-replica | StatefulSet | Read replica |
-| keycloak-0,1 | Deployment (HA) | 2 replicas |
-| axon-server-0 | StatefulSet | Single node |
-| zipkin | Deployment | Distributed tracing |
+| Component           | Type            | Replicas / Notes    |
+| ------------------- | --------------- | ------------------- |
+| kafka-0,1,2         | StatefulSet     | 3 brokers           |
+| cassandra-0,1,2     | StatefulSet     | 3 nodes             |
+| elasticsearch-0,1,2 | StatefulSet     | 3 nodes             |
+| redis-0             | StatefulSet     | Primary             |
+| redis-1,2           | StatefulSet     | Replicas            |
+| postgresql-primary  | StatefulSet     | Primary             |
+| postgresql-replica  | StatefulSet     | Read replica        |
+| keycloak-0,1        | Deployment (HA) | 2 replicas          |
+| axon-server-0       | StatefulSet     | Single node         |
+| zipkin              | Deployment      | Distributed tracing |
 
 ---
 
 ## 2️⃣ Application Layer (`x-social` namespace)
 
-| Service | Workload Type | HPA Range | Notes |
-|----------|--------------|------------|-------|
-| user-service | Deployment | 2–10 |  |
-| media-service | Deployment | 2–10 |  |
-| post-service | Deployment | 2–10 |  |
-| comment-service | Deployment | 2–10 |  |
-| notification-service | Deployment | 2–10 |  |
-| search-service | Deployment | 2–8 |  |
-| group-service | Deployment | 2–8 |  |
-| private-message-service | Deployment | 2–10 |  |
-| message-notification-service | Deployment | 2–8 |  |
-| post-guard-service | Deployment | 2–6 | GPU optional |
-| media-guard-service | Deployment | 2–6 | GPU optional |
-| user-analysis-service | Deployment | 2–4 |  |
-| ai-dashboard-service | Deployment | 2–4 |  |
+| Service                      | Workload Type | HPA Range | Notes        |
+| ---------------------------- | ------------- | --------- | ------------ |
+| user-service                 | Deployment    | 2–10      |              |
+| media-service                | Deployment    | 2–10      |              |
+| post-service                 | Deployment    | 2–10      |              |
+| comment-service              | Deployment    | 2–10      |              |
+| notification-service         | Deployment    | 2–10      |              |
+| search-service               | Deployment    | 2–8       |              |
+| group-service                | Deployment    | 2–8       |              |
+| private-message-service      | Deployment    | 2–10      |              |
+| message-notification-service | Deployment    | 2–8       |              |
+| post-guard-service           | Deployment    | 2–6       | GPU optional |
+| media-guard-service          | Deployment    | 2–6       | GPU optional |
+| user-analysis-service        | Deployment    | 2–4       |              |
+| ai-dashboard-service         | Deployment    | 2–4       |              |
 
 ---
 
