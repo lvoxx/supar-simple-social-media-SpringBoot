@@ -115,13 +115,20 @@ Used for domain events, fan-out notifications, analytics ingestion.
 
 Used for **behavioral propagation** (user preferences affecting multiple services):
 
-```
-user-svc ──[UpdateUserPreferencesCommand]──► Axon Server
-             │
-             └──► [UserPreferencesUpdatedEvent] broadcast to:
-                     notification-svc  (update delivery rules)
-                     post-svc          (update feed personalization)
-                     user-analysis-svc (register preference change)
+```mermaid
+flowchart TD
+
+    UserSvc["user-svc"]
+        -->|UpdateUserPreferencesCommand| Axon["Axon Server"]
+
+    Axon
+        -->|UserPreferencesUpdatedEvent| Noti["notification-svc<br/>(update delivery rules)"]
+
+    Axon
+        -->|UserPreferencesUpdatedEvent| Post["post-svc<br/>(update feed personalization)"]
+
+    Axon
+        -->|UserPreferencesUpdatedEvent| Analysis["user-analysis-svc<br/>(register preference change)"]
 ```
 
 Axon events are **not** used for data fetch — use Kafka consumers or WebClient for that.
@@ -150,43 +157,36 @@ Axon events are **not** used for data fetch — use Kafka consumers or WebClient
 ```mermaid
 flowchart TD
 
-    %% ================= READ PATH =================
-    subgraph READ_PATH["READ PATH"]
-        Req["Client Request"]
-        L1["L1 Local Cache<br/>(Caffeine, 1s TTL, hot set)"]
-        L2["L2 Redis Cache<br/>(@Cacheable, configurable TTL)"]
-        DB["Database"]
+    Req["Client Request"]
+        --> L1["L1 Local Cache<br/>(Caffeine, 1s TTL, hot set)"]
 
-        Req --> L1
-        L1 -->|miss| L2
-        L2 -->|miss| DB
-    end
+    L1 -->|miss| L2["L2 Redis Cache<br/>(@Cacheable, configurable TTL)"]
 
-    %% ================= WRITE PATH =================
-    subgraph WRITE_PATH["WRITE PATH (Write-Through)"]
-        Mutation["Mutation Request"]
-        DB2["Database"]
-        RedisUpdate["Evict / Update Redis<br/>(@CacheEvict / @CachePut)"]
-        Kafka["Publish Domain Event<br/>(Kafka)"]
+    L2 -->|miss| DB["Database"]
+```
 
-        Mutation --> DB2
-        DB2 --> RedisUpdate
-        RedisUpdate --> Kafka
-    end
+```mermaid
+flowchart TD
 
-    %% ================= DISTRIBUTED LOCK =================
-    subgraph DISTRIBUTED_LOCK["DISTRIBUTED LOCK (Redisson)"]
-        CriticalOp["Critical Write Operation<br/>(follow/unfollow counters,<br/>post counters)"]
-        Lock["RLock<br/>lock:user:{userId}:follow"]
-        TryLock["tryLock(500ms wait,<br/>5s lease)"]
-        Update["Perform Update"]
-        Unlock["unlock()"]
+    Mutation["Mutation Request"]
+        --> DB["Database"]
 
-        CriticalOp --> Lock
-        Lock --> TryLock
-        TryLock -->|success| Update
-        Update --> Unlock
-    end
+    DB --> RedisUpdate["Evict / Update Redis<br/>(@CacheEvict / @CachePut)"]
+
+    RedisUpdate --> Kafka["Publish Domain Event<br/>(Kafka)"]
+```
+
+```mermaid
+flowchart TD
+
+    CriticalOp["Critical Write Operation<br/>(follow/unfollow counters,<br/>post counters)"]
+        --> Lock["RLock<br/>lock:user:{userId}:follow"]
+
+    Lock --> TryLock["tryLock(500ms wait,<br/>5s lease)"]
+
+    TryLock -->|success| Update["Perform Update"]
+
+    Update --> Unlock["unlock()"]
 ```
 
 **TTL Guidelines:**
