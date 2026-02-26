@@ -7,8 +7,10 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.cloudinary.Cloudinary;
+import com.cloudinary.Transformation;
 import com.cloudinary.utils.ObjectUtils;
 
+import io.github.lvoxx.media_service.cloudinary.FolderType;
 import io.github.lvoxx.media_service.properties.MediaProperties;
 import io.github.lvoxx.media_service.utils.MediaType;
 import io.github.lvoxx.media_service.utils.VariantType;
@@ -30,7 +32,7 @@ public class CloudinaryService {
     public Mono<Map<String, Object>> generateUploadSignature(UUID mediaId, MediaType mediaType) {
         return Mono.fromCallable(() -> {
             long timestamp = System.currentTimeMillis() / 1000;
-            String folder = getFolder(mediaType);
+            String folder = FolderType.getFolderFromMediaType(mediaType);
             String publicId = folder + "/" + mediaId.toString();
 
             Map<String, Object> params = new HashMap<>();
@@ -52,46 +54,58 @@ public class CloudinaryService {
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
+    @SuppressWarnings("rawtypes")
     @Retry(name = "cloudinary")
-    public Mono<String> generateVariantUrl(String publicId, MediaType mediaType, VariantType variant) {
-        return Mono.fromCallable(() -> {
-            Map<String, Object> options = new HashMap<>();
-            options.put("secure", true);
-            options.put("sign_url", true);
+    public Mono<String> generateVariantUrl(String publicId,
+            MediaType mediaType,
+            VariantType variant) {
+        return Mono.defer(() -> {
+            var urlBuilder = cloudinary.url().secure(true);
+            if (mediaType == MediaType.VIDEO) {
+                Transformation transformation = new Transformation()
+                        .quality("auto");
 
-            if (mediaType == MediaType.IMAGE || mediaType == MediaType.AVATAR || mediaType == MediaType.COVER) {
+                String url = urlBuilder
+                        .resourceType("video")
+                        .transformation(transformation)
+                        .generate(publicId);
+
+                return Mono.just(url);
+            }
+            if (isImageType(mediaType)) {
                 String dimensions = getImageVariantDimensions(variant);
-                if (dimensions != null) {
+
+                if (dimensions != null && dimensions.contains("x")) {
                     String[] parts = dimensions.split("x");
-                    options.put("width", Integer.parseInt(parts[0]));
-                    options.put("height", Integer.parseInt(parts[1]));
-                    options.put("crop", "fill");
-                    options.put("quality", "auto");
-                    options.put("fetch_format", "auto");
-                }
-            } else if (mediaType == MediaType.VIDEO) {
-                if (variant == VariantType.STREAM) {
-                    options.put("resource_type", "video");
-                    options.put("quality", "auto");
+                    int width = Integer.parseInt(parts[0]);
+                    int height = Integer.parseInt(parts[1]);
+
+                    Transformation transformation = new Transformation()
+                            .width(width)
+                            .height(height)
+                            .crop("fill")
+                            .quality("auto")
+                            .fetchFormat("auto");
+                    String url = urlBuilder
+                            .transformation(transformation)
+                            .generate(publicId);
+
+                    return Mono.just(url);
                 }
             }
-
-            return cloudinary.url().generate(publicId, options);
-        }).subscribeOn(Schedulers.boundedElastic());
+            return Mono.just(urlBuilder.generate(publicId));
+        });
     }
 
     @Retry(name = "cloudinary")
     public Mono<String> generateSignedUrl(String publicId, String resourceType, int ttlSeconds) {
         return Mono.fromCallable(() -> {
-            long expiration = System.currentTimeMillis() / 1000 + ttlSeconds;
-
-            Map<String, Object> options = new HashMap<>();
-            options.put("secure", true);
-            options.put("sign_url", true);
-            options.put("resource_type", resourceType);
-            options.put("type", "upload");
-            return cloudinary.url().signed(true).generate(publicId, options);
-
+            return cloudinary.url()
+                    .secure(true)
+                    .signed(true)
+                    .resourceType(resourceType)
+                    .type("upload")
+                    .generate(publicId);
         }).subscribeOn(Schedulers.boundedElastic());
     }
 
@@ -101,17 +115,6 @@ public class CloudinaryService {
             cloudinary.uploader().destroy(publicId, ObjectUtils.asMap("resource_type", resourceType));
             return null;
         }).subscribeOn(Schedulers.boundedElastic()).then();
-    }
-
-    private String getFolder(MediaType mediaType) {
-        return switch (mediaType) {
-            case IMAGE -> "images";
-            case VIDEO -> "videos";
-            case ATTACHMENT -> "attachments";
-            case CHAT_MEDIA -> "chat";
-            case AVATAR -> "avatars";
-            case COVER -> "covers";
-        };
     }
 
     private String getImageVariantDimensions(VariantType variant) {
@@ -127,5 +130,11 @@ public class CloudinaryService {
             case LARGE -> imageVariants.get("large");
             default -> null;
         };
+    }
+
+    private boolean isImageType(MediaType type) {
+        return type == MediaType.IMAGE
+                || type == MediaType.AVATAR
+                || type == MediaType.COVER;
     }
 }
