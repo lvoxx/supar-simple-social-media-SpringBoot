@@ -98,12 +98,7 @@
 		<module>common/common-integration</module>
 		<module>media-service</module>
 		<module>post-service</module>
-		<module>starter/elasticsearch-starter</module>
-		<module>starter/kafka-consumer-starter</module>
-		<module>starter/kafka-producer-starter</module>
-		<module>starter/message-starter</module>
 		<module>starter/postgres-starter</module>
-		<module>starter/redis-starter</module>
 		<module>user-service</module>
 	</modules>
 
@@ -137,39 +132,11 @@
 			</dependency>
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
-				<artifactId>postgres-starter</artifactId>
-				<version>${postgres-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>redis-starter</artifactId>
-				<version>${redis-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>message-starter</artifactId>
-				<version>${message-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>kafka-producer-starter</artifactId>
-				<version>${kafka-producer-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>kafka-consumer-starter</artifactId>
-				<version>${kafka-consumer-starter.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
 				<artifactId>post-service</artifactId>
 				<version>${post-service.version}</version>
 			</dependency>
-			<dependency>
-				<groupId>io.github.lvoxx</groupId>
-				<artifactId>elasticsearch-starter</artifactId>
-				<version>${elasticsearch-starter.version}</version>
-			</dependency>
+
+			<!-- STARTER MODULES -->
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->
 			<dependency>
