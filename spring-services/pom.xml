@@ -87,8 +87,14 @@
 		<lombok.version>1.18.42</lombok.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<redis.version>4.1.0</redis.version>
+		<redisson-spring.version>4.2.0</redisson-spring.version>
+		<reactor-kafka.version>1.3.25</reactor-kafka.version>
+		<bucket4j-core.version>8.0.1</bucket4j-core.version>
+		<bucket4j-redis.version>8.10.1</bucket4j-redis.version>
 		<tika-core.version>3.2.3</tika-core.version>
 		<avro.version>1.12.1</avro.version>
+		<uuid-creator.version>6.1.1</uuid-creator.version>
+		<ulid-creator.version>5.2.4</ulid-creator.version>
 		<axon-spring-boot.version>4.10.0</axon-spring-boot.version>
 		<kafka-avro-serializer.version>8.1.1</kafka-avro-serializer.version>
 		<cloudinary.version>1.39.0</cloudinary.version>
@@ -216,6 +222,11 @@
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>org.redisson</groupId>
+				<artifactId>redisson-spring-boot-starter</artifactId>
+				<version>${redisson-spring.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-data-elasticsearch</artifactId>
 				<version>${spring-boot.version}</version>
@@ -299,6 +310,21 @@
 				<version>${redis.version}</version>
 			</dependency>
 			<dependency>
+				<groupId>io.projectreactor.kafka</groupId>
+				<artifactId>reactor-kafka</artifactId>
+				<version>${reactor-kafka.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.bucket4j</groupId>
+				<artifactId>bucket4j-redis</artifactId>
+				<version>${bucket4j-redis.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.bucket4j</groupId>
+				<artifactId>bucket4j-core</artifactId>
+				<version>${bucket4j-core.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>com.cloudinary</groupId>
 				<artifactId>cloudinary-http44</artifactId>
 				<version>${cloudinary.version}</version>
@@ -307,6 +333,16 @@
 				<groupId>io.swagger.core.v3</groupId>
 				<artifactId>swagger-annotations</artifactId>
 				<version>${swagger-annotation.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.f4b6a3</groupId>
+				<artifactId>uuid-creator</artifactId>
+				<version>${uuid-creator.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.f4b6a3</groupId>
+				<artifactId>ulid-creator</artifactId>
+				<version>${ulid-creator.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>org.mapstruct</groupId>
