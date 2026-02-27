@@ -1,0 +1,20 @@
+spring:
+  cassandra:
+    contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
+    port: ${CASSANDRA_PORT:9042}
+    keyspace-name: ${CASSANDRA_KEYSPACE:x_social}
+    local-datacenter: datacenter1
+    username: ${CASSANDRA_USER:cassandra}
+    password: ${CASSANDRA_PASSWORD:cassandra}
+    schema-action: CREATE_IF_NOT_EXISTS
+    request:
+      timeout: 10s
+      consistency: LOCAL_QUORUM
+      serial-consistency: LOCAL_SERIAL
+      page-size: 20
+    connection:
+      connect-timeout: 5s
+      init-query-timeout: 10s
+    pool:
+      local:
+        size: 1
