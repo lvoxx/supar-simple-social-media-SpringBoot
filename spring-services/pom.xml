@@ -62,18 +62,23 @@
 		<spring-context.version>7.0.3</spring-context.version>
 
 		<!-- INTERNAL MODULE VERSIONS -->
+		<!-- COMMONS -->
 		<common-core.version>1.0.0</common-core.version>
 		<common-keys.version>1.0.0</common-keys.version>
 		<common-integration.version>1.0.0</common-integration.version>
-		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
-		<kafka-consumer-starter.version>1.0.0</kafka-consumer-starter.version>
-		<kafka-producer-starter.version>1.0.0</kafka-producer-starter.version>
+		<!-- SERVICES -->
 		<media-service.version>1.0.0</media-service.version>
-		<message-starter.version>1.0.0</message-starter.version>
 		<post-service.version>1.0.0</post-service.version>
+		<user-service.version>1.0.0</user-service.version>
+		<!-- STARTERS -->
+		<cassandra-starter.version>1.0.0</cassandra-starter.version>
+		<elasticsearch-starter.version>1.0.0</elasticsearch-starter.version>
+		<kafka-starter.version>1.0.0</kafka-starter.version>
+		<metrics-starter.version>1.0.0</metrics-starter.version>
 		<postgres-starter.version>1.0.0</postgres-starter.version>
 		<redis-starter.version>1.0.0</redis-starter.version>
-		<user-service.version>1.0.0</user-service.version>
+		<security-starter.version>1.0.0</security-starter.version>
+		<websocket-starter.version>1.0.0</websocket-starter.version>
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
 		<postgresql.version>42.7.9</postgresql.version>
@@ -93,12 +98,23 @@
 	</properties>
 
 	<modules>
+		<!-- COMMON -->
 		<module>common/common-core</module>
 		<module>common/common-keys</module>
 		<module>common/common-integration</module>
+		<!-- SERVICES -->
 		<module>media-service</module>
 		<module>post-service</module>
+		<!-- STARTERS -->
+		<module>starter/cassandra-starter</module>
+		<module>starter/elasticsearch-starter</module>
 		<module>starter/postgres-starter</module>
+		<module>starter/kafka-starter</module>
+		<module>starter/metrics-starter</module>
+		<module>starter/postgres-starter</module>
+		<module>starter/redis-starter</module>
+		<module>starter/security-starter</module>
+		<module>starter/websocket-starter</module>
 		<module>user-service</module>
 	</modules>
 
@@ -137,6 +153,46 @@
 			</dependency>
 
 			<!-- STARTER MODULES -->
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>cassandra-starter</artifactId>
+				<version>${cassandra-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>elasticsearch-starter</artifactId>
+				<version>${elasticsearch-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>kafka-starter</artifactId>
+				<version>${kafka-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>metrics-starter</artifactId>
+				<version>${metrics-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>postgres-starter</artifactId>
+				<version>${postgres-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>redis-starter</artifactId>
+				<version>${redis-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>security-starter</artifactId>
+				<version>${security-starter.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>websocket-starter</artifactId>
+				<version>${websocket-starter.version}</version>
+			</dependency>
 
 			<!-- SPRING BOOT CORE DEPENDENCIES -->
 			<dependency>
@@ -417,6 +473,26 @@
 					<configuration>
 						<source>${java.version}</source>
 						<target>${java.version}</target>
+						<annotationProcessorPaths>
+							<path>
+								<groupId>org.mapstruct</groupId>
+								<artifactId>mapstruct-processor</artifactId>
+								<version>${mapstruct.version}</version>
+							</path>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok</artifactId>
+							</path>
+							<path>
+								<groupId>org.projectlombok</groupId>
+								<artifactId>lombok-mapstruct-binding</artifactId>
+								<version>0.2.0</version>
+							</path>
+							<path>
+								<groupId>org.springframework.boot</groupId>
+								<artifactId>spring-boot-configuration-processor</artifactId>
+							</path>
+						</annotationProcessorPaths>
 					</configuration>
 				</plugin>
 
