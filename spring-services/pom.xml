@@ -117,7 +117,6 @@
 		<module>starter/postgres-starter</module>
 		<module>starter/kafka-starter</module>
 		<module>starter/metrics-starter</module>
-		<module>starter/postgres-starter</module>
 		<module>starter/redis-starter</module>
 		<module>starter/security-starter</module>
 		<module>starter/websocket-starter</module>
