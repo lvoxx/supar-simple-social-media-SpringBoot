@@ -112,15 +112,7 @@
 		<module>media-service</module>
 		<module>post-service</module>
 		<!-- STARTERS -->
-		<module>starter/cassandra-starter</module>
-		<module>starter/elasticsearch-starter</module>
-		<module>starter/postgres-starter</module>
-		<module>starter/kafka-starter</module>
-		<module>starter/metrics-starter</module>
-		<module>starter/redis-starter</module>
-		<module>starter/security-starter</module>
-		<module>starter/websocket-starter</module>
-		<module>user-service</module>
+		<module>starter</module>
 	</modules>
 
 	<dependencyManagement>
@@ -278,6 +270,16 @@
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-starter-zipkin</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-autoconfigure</artifactId>
+				<version>${spring-boot.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-configuration-processor</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>

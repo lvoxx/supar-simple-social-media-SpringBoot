@@ -1,4 +1,4 @@
-package io.github.lvoxx.kafka-starter.properties;
+package io.github.lvoxx.kafka_starter.properties;
 
 /**
  * XSocial-specific Kafka extension properties.

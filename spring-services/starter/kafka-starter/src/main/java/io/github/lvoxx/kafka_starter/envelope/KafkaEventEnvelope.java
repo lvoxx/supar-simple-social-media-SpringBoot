@@ -1,4 +1,4 @@
-package io.github.lvoxx.kafka-starter.envelope;
+package io.github.lvoxx.kafka_starter.envelope;
 
 public class KafkaEventEnvelope {
 

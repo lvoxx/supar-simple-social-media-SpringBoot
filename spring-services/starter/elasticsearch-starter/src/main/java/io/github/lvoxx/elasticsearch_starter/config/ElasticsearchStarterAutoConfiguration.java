@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.elasticsearch.autoconfigure.ElasticsearchClientAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.elasticsearch.client.elc.ReactiveElasticsearchClient;
 import org.springframework.data.elasticsearch.repository.config.EnableReactiveElasticsearchRepositories;
@@ -14,7 +15,7 @@ import io.github.lvoxx.elasticsearch_starter.index.ElasticsearchIndexManager;
 
 /**
  * Auto-configuration for reactive Elasticsearch.
- *
+ * 
  * <h3>What this starter provides:</h3>
  * <ul>
  * <li>{@link ReactiveElasticsearchClient} — managed by Spring Boot's own
@@ -29,7 +30,7 @@ import io.github.lvoxx.elasticsearch_starter.index.ElasticsearchIndexManager;
  * for defaults.
  * </p>
  */
-@AutoConfiguration(after = ElasticsearchAutoConfiguration.class)
+@AutoConfiguration(after = ElasticsearchClientAutoConfiguration.class)
 @ConditionalOnClass(ReactiveElasticsearchClient.class)
 @EnableReactiveElasticsearchRepositories
 public class ElasticsearchStarterAutoConfiguration {
