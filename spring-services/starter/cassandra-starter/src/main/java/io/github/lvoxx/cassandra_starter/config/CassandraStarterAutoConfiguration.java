@@ -1,21 +1,22 @@
 package io.github.lvoxx.cassandra_starter.config;
 
-import com.datastax.oss.driver.api.core.CqlSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.cassandra.autoconfigure.CassandraAutoConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.cassandra.ReactiveSessionFactory;
-import org.springframework.data.cassandra.config.EnableReactiveCassandraRepositories;
 import org.springframework.data.cassandra.core.ReactiveCassandraTemplate;
 import org.springframework.data.cassandra.core.convert.CassandraConverter;
 import org.springframework.data.cassandra.core.convert.MappingCassandraConverter;
 import org.springframework.data.cassandra.core.mapping.CassandraMappingContext;
 import org.springframework.data.cassandra.core.mapping.SimpleUserTypeResolver;
+import org.springframework.data.cassandra.repository.config.EnableReactiveCassandraRepositories;
+
+import com.datastax.oss.driver.api.core.CqlSession;
 
 /**
  * Auto-configuration for reactive Apache Cassandra.
@@ -82,10 +83,8 @@ public class CassandraStarterAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean
-    public CassandraMappingContext cassandraMappingContext(CqlSession cqlSession) {
-        CassandraMappingContext context = new CassandraMappingContext();
-        context.setUserTypeResolver(new SimpleUserTypeResolver(cqlSession));
-        return context;
+    public CassandraMappingContext cassandraMappingContext() {
+        return new CassandraMappingContext();
     }
 
     /**
