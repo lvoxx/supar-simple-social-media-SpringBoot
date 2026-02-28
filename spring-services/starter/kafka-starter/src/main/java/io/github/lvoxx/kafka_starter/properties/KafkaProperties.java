@@ -1,5 +1,9 @@
 package io.github.lvoxx.kafka_starter.properties;
 
+import java.time.Duration;
+
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
 /**
  * XSocial-specific Kafka extension properties.
  * Standard Spring Kafka producer/consumer properties are configured via
