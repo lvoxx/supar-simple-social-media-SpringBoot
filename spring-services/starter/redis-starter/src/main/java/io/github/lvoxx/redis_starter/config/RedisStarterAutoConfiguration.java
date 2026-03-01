@@ -111,7 +111,7 @@ public class RedisStarterAutoConfiguration {
 
         /**
          * Spring Cache manager backed by Redis with a 5-minute default TTL.
-         * Null values are not cached. All keys are prefixed with {@code xsocial:}.
+         * Null values are not cached. All keys are prefixed with {@code sssm:}.
          */
         @Bean
         @ConditionalOnMissingBean(RedisCacheManager.class)
@@ -119,7 +119,7 @@ public class RedisStarterAutoConfiguration {
                 var defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
                                 .entryTtl(Duration.ofMinutes(5))
                                 .disableCachingNullValues()
-                                .prefixCacheNameWith("xsocial:");
+                                .prefixCacheNameWith("sssm:");
 
                 return RedisCacheManager.builder(connectionFactory)
                                 .cacheDefaults(defaultConfig)
@@ -128,11 +128,11 @@ public class RedisStarterAutoConfiguration {
 
         /**
          * Bucket4j distributed rate limiter using Redisson as the storage backend.
-         * Conditionally disabled via {@code xsocial.rate-limit.enabled=false}.
+         * Conditionally disabled via {@code sssm.rate-limit.enabled=false}.
          */
         @Bean
         @ConditionalOnMissingBean(RateLimiterService.class)
-        @ConditionalOnProperty(prefix = "xsocial.rate-limit", name = "enabled", matchIfMissing = true)
+        @ConditionalOnProperty(prefix = "sssm.rate-limit", name = "enabled", matchIfMissing = true)
         public RateLimiterService rateLimiterService(
                         RedissonClient redissonClient,
                         RedisRateLimitProperties properties) {

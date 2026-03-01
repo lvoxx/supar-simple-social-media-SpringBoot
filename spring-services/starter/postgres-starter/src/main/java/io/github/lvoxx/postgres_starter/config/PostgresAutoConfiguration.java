@@ -61,7 +61,7 @@ public class PostgresAutoConfiguration {
      */
     @Bean
     @ConditionalOnMissingBean(ReactiveAuditorAware.class)
-    @ConditionalOnProperty(prefix = "xsocial.postgres", name = "auditor-enabled", matchIfMissing = true)
+    @ConditionalOnProperty(prefix = "sssm.postgres", name = "auditor-enabled", matchIfMissing = true)
     public ReactiveAuditorAware<UUID> reactiveAuditorAware() {
         log.info("[starter-postgres] Registering SecurityContextReactiveAuditorAware");
         return new SecurityContextReactiveAuditorAware();

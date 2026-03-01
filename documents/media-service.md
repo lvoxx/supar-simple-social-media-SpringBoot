@@ -166,7 +166,7 @@ cloudinary:
 ## Cấu trúc source
 
 ```
-media-service/src/main/java/com/xsocial/media/
+media-service/src/main/java/com/sssm/media/
 ├── config/CloudinaryConfig.java
 ├── domain/
 │   ├── entity/MediaAsset.java

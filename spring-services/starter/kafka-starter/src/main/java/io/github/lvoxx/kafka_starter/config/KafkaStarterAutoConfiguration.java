@@ -49,7 +49,7 @@ import reactor.kafka.sender.SenderOptions;
  * consumers to the starter.
  *
  * <h3>DLT and retry:</h3>
- * Use {@code @RetryableTopic} with values from {@code xsocial.kafka.retry.*} on
+ * Use {@code @RetryableTopic} with values from {@code sssm.kafka.retry.*} on
  * consumer methods.
  * Each topic automatically gets a {@code <topic>.DLT} dead-letter topic.
  */

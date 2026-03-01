@@ -220,7 +220,7 @@ Xóa tài khoản (soft):
 ## Cấu trúc source
 
 ```
-user-service/src/main/java/com/xsocial/user/
+user-service/src/main/java/com/sssm/user/
 ├── config/
 │   ├── KeycloakClientConfig.java
 │   └── UserServiceConfig.java

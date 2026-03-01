@@ -5,11 +5,11 @@ import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * XSocial-specific Kafka extension properties.
+ * sssm-specific Kafka extension properties.
  * Standard Spring Kafka producer/consumer properties are configured via
  * {@code spring.kafka.*}.
  */
-@ConfigurationProperties(prefix = "xsocial.kafka")
+@ConfigurationProperties(prefix = "sssm.kafka")
 public class KafkaProperties {
 
     private final Retry retry = new Retry();

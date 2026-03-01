@@ -498,7 +498,7 @@ GET    /api/v1/message-notifications/stats
 ## Configuration
 
 ```yaml
-xsocial:
+sssm:
   message-notification:
     fcm:
       service-account-key: ${FCM_SERVICE_ACCOUNT_KEY}
@@ -512,7 +512,7 @@ xsocial:
     web-push:
       vapid-public-key: ${VAPID_PUBLIC_KEY}
       vapid-private-key: ${VAPID_PRIVATE_KEY}
-      subject: mailto:push@xsocial.com
+      subject: mailto:push@sssm.com
     batching:
       window-seconds: 5
       max-batch-size: 20

@@ -8,7 +8,7 @@
 <service-name>/
 ├── src/
 │   ├── main/
-│   │   ├── java/com/xsocial/<service>/
+│   │   ├── java/com/sssm/<service>/
 │   │   │   ├── config/          # Spring @Configuration beans
 │   │   │   ├── domain/
 │   │   │   │   ├── entity/      # R2DBC / Cassandra entities
@@ -34,7 +34,7 @@
 │   │       ├── application-prod.yaml
 │   │       └── db/migration/    # Flyway scripts: V1__init.sql
 │   └── test/
-│       ├── java/com/xsocial/<service>/
+│       ├── java/com/sssm/<service>/
 │       │   ├── unit/
 │       │   ├── integration/
 │       │   └── automation/

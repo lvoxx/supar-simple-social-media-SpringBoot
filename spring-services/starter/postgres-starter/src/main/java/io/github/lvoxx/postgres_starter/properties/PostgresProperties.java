@@ -11,10 +11,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * <p>
  * Backed by {@code spring.r2dbc.*} and {@code spring.flyway.*} standard Spring
  * Boot properties.
- * This class only adds XSocial-specific extensions.
+ * This class only adds sssm-specific extensions.
  * </p>
  */
-@ConfigurationProperties(prefix = "xsocial.postgres")
+@ConfigurationProperties(prefix = "sssm.postgres")
 public class PostgresProperties {
 
     /**

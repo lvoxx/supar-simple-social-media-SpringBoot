@@ -17,7 +17,7 @@ Thư viện dùng chung cho tất cả Spring Boot services. Chứa: error handl
 ```xml
 <!-- pom.xml của mỗi service -->
 <dependency>
-    <groupId>com.xsocial</groupId>
+    <groupId>com.sssm</groupId>
     <artifactId>common-core</artifactId>
     <version>${project.version}</version>
 </dependency>
@@ -28,7 +28,7 @@ Thư viện dùng chung cho tất cả Spring Boot services. Chứa: error handl
 ## Package Structure
 
 ```
-com.xsocial.common.core/
+com.sssm.common.core/
 ├── exception/
 ├── handler/
 ├── message/
@@ -366,8 +366,8 @@ public class ReactiveValidator {
 
 ```
 META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports:
-  com.xsocial.common.core.handler.GlobalErrorWebExceptionHandlerAutoConfig
-  com.xsocial.common.core.validation.ReactiveValidatorAutoConfig
+  com.sssm.common.core.handler.GlobalErrorWebExceptionHandlerAutoConfig
+  com.sssm.common.core.validation.ReactiveValidatorAutoConfig
 ```
 
 Services không cần cấu hình thêm — import dependency là dùng được ngay.

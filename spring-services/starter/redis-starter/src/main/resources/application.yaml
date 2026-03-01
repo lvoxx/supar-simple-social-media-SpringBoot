@@ -15,7 +15,7 @@ spring:
     redis:
       time-to-live: 300s
       cache-null-values: false
-      key-prefix: "xsocial:"
+      key-prefix: "sssm:"
 
 redisson:
   single-server-config:
@@ -26,10 +26,10 @@ redisson:
     idle-connection-timeout: 10000
     connect-timeout: 3000
 
-xsocial:
+sssm:
   rate-limit:
     enabled: true
     default-capacity: 100
     default-refill-tokens: 100
     default-refill-period: 1m
-    key-prefix: "xsocial:rate-limit:"
+    key-prefix: "sssm:rate-limit:"

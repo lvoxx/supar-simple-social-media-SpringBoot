@@ -180,7 +180,7 @@ Query Cassandra:
 ## Cấu trúc source
 
 ```
-comment-service/src/main/java/com/xsocial/comment/
+comment-service/src/main/java/com/sssm/comment/
 ├── config/CassandraCommentConfig.java
 ├── domain/
 │   ├── entity/Comment.java, CommentCounter.java

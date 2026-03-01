@@ -8,7 +8,7 @@
 ### Package Structure
 
 ```
-com.xsocial.common.core/
+com.sssm.common.core/
 ├── exception/
 │   ├── BusinessException           # Base runtime exception with error code
 │   ├── ResourceNotFoundException   # 404
@@ -48,7 +48,7 @@ com.xsocial.common.core/
 ```xml
 <!-- pom.xml -->
 <dependency>
-    <groupId>com.xsocial</groupId>
+    <groupId>com.sssm</groupId>
     <artifactId>common-core</artifactId>
     <version>${project.version}</version>
 </dependency>
@@ -92,12 +92,12 @@ spring:
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
-        spring.json.trusted.packages: "com.xsocial.*"
+        spring.json.trusted.packages: "com.sssm.*"
     listener:
       ack-mode: MANUAL_IMMEDIATE
       concurrency: 3
 
-xsocial:
+sssm:
   kafka:
     retry:
       max-attempts: 3
@@ -156,7 +156,7 @@ redisson:
     password: ${REDIS_PASSWORD:}
     connection-pool-size: 16
 
-xsocial:
+sssm:
   rate-limit:
     enabled: true
     default-capacity: 100
@@ -332,7 +332,7 @@ spring:
 ### application.yaml config
 
 ```yaml
-xsocial:
+sssm:
   websocket:
     allowed-origins: ${WS_ALLOWED_ORIGINS:*}
     heartbeat-interval: 25s
@@ -370,7 +370,7 @@ Service controller:
 ### application.yaml config
 
 ```yaml
-xsocial:
+sssm:
   security:
     user-id-header: X-User-Id
     roles-header: X-User-Roles

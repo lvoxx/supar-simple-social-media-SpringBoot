@@ -10,7 +10,7 @@ spring:
       max-acquire-time: 5s
       validation-query: SELECT 1
 
-xsocial:
+sssm:
   postgres:
     auditor-enabled: true
     user-id-header: X-User-Id

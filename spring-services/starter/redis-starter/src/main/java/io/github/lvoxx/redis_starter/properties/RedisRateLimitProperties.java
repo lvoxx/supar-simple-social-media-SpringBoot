@@ -5,11 +5,11 @@ import java.time.Duration;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * XSocial-specific extension properties for the Redis starter.
+ * sssm-specific extension properties for the Redis starter.
  * Standard Spring Boot Redis/Cache properties ({@code spring.data.redis.*},
  * {@code spring.cache.*}) are still used for core connection configuration.
  */
-@ConfigurationProperties(prefix = "xsocial.rate-limit")
+@ConfigurationProperties(prefix = "sssm.rate-limit")
 public class RedisRateLimitProperties {
 
     /** Whether rate limiting is active globally. */
@@ -31,7 +31,7 @@ public class RedisRateLimitProperties {
     private Duration defaultRefillPeriod = Duration.ofMinutes(1);
 
     /** Redis key prefix for rate-limit buckets. */
-    private String keyPrefix = "xsocial:rate-limit:";
+    private String keyPrefix = "sssm:rate-limit:";
 
     // -------------------------------------------------------------------------
     // Getters & setters

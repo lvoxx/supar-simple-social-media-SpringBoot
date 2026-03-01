@@ -115,7 +115,7 @@ spring:
     redis:
       time-to-live: 300s
       cache-null-values: false
-      key-prefix: "xsocial:"
+      key-prefix: "sssm:"
 
 redisson:
   single-server-config:
@@ -126,7 +126,7 @@ redisson:
     idle-connection-timeout: 10000
     connect-timeout: 3000
 
-xsocial:
+sssm:
   rate-limit:
     enabled: true
     default-capacity: 100
@@ -220,13 +220,13 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.xsocial.*"
+        spring.json.trusted.packages: "com.sssm.*"
         isolation.level: read_committed
     listener:
       ack-mode: MANUAL_IMMEDIATE
       concurrency: 3
 
-xsocial:
+sssm:
   kafka:
     retry:
       max-attempts: 3
@@ -386,7 +386,7 @@ requestId  ← tạo mới (ULID)
 ### application.yaml
 
 ```yaml
-xsocial:
+sssm:
   websocket:
     allowed-origins: ${WS_ALLOWED_ORIGINS:*}
     heartbeat-interval: 25s
@@ -429,7 +429,7 @@ public class NotificationWebSocketHandler implements WebSocketHandler {
 ### application.yaml
 
 ```yaml
-xsocial:
+sssm:
   security:
     user-id-header: X-User-Id
     roles-header: X-User-Roles

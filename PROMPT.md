@@ -355,12 +355,12 @@ Extract JWT claims from gateway-forwarded headers. Provide `UserPrincipal` recor
 
 ## COMMON-CORE SPECIFICATION
 
-Package: `com.xsocial.common.core`
+Package: `com.sssm.common.core`
 
 Generate:
 
 ```
-common-core/src/main/java/com/xsocial/common/core/
+common-core/src/main/java/com/sssm/common/core/
 ├── exception/
 │   ├── BusinessException.java          # Base checked business exception
 │   ├── ResourceNotFoundException.java
