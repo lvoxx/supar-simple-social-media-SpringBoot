@@ -38,22 +38,7 @@
 			<artifactId>r2dbc-postgresql</artifactId>
 		</dependency>
 
-		<!-- Flyway (blocking migration, runs at startup only) -->
-		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-core</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.flywaydb</groupId>
-			<artifactId>flyway-database-postgresql</artifactId>
-		</dependency>
-		<!-- JDBC driver needed by Flyway -->
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-		</dependency>
-
-		<!-- Spring Security (for ReactiveSecurityContextHolder in AuditorAware) -->
+		<!-- Spring Security needed for ReactiveSecurityContextHolder in AuditorAware -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
