@@ -40,6 +40,17 @@
 			<artifactId>spring-boot-starter-cache</artifactId>
 		</dependency>
 
+		<!--
+            Jackson 3 (SB4 default).
+            - tools.jackson.core:jackson-databind (Jackson 3 core)
+            - com.fasterxml.jackson.core:jackson-annotations (stays at Jackson 2 groupId, shared compat layer)
+            spring-boot-starter-jackson pulls these automatically via SB4 BOM.
+        -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jackson</artifactId>
+		</dependency>
+
 		<!-- Redisson (distributed lock, advanced data structures) -->
 		<dependency>
 			<groupId>org.redisson</groupId>

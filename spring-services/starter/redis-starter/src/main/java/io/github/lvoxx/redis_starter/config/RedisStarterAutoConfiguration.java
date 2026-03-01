@@ -2,22 +2,22 @@ package io.github.lvoxx.redis_starter.config;
 
 import java.time.Duration;
 
+import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.redisson.command.CommandAsyncExecutor;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.cache.autoconfigure.CacheAutoConfiguration;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
 import org.springframework.data.redis.cache.RedisCacheManager;
 import org.springframework.data.redis.connection.ReactiveRedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
-import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
+import org.springframework.data.redis.serializer.GenericJacksonJsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -25,116 +25,124 @@ import io.github.bucket4j.distributed.proxy.ProxyManager;
 import io.github.bucket4j.redis.redisson.cas.RedissonBasedProxyManager;
 import io.github.lvoxx.redis_starter.properties.RedisRateLimitProperties;
 import io.github.lvoxx.redis_starter.ratelimit.RateLimiterService;
+import lombok.extern.slf4j.Slf4j;
+import tools.jackson.databind.ObjectMapper;
 
 /**
- * Auto-configuration for Redis integration.
+ * Auto-configuration for Redis integration (Spring Boot 4.0.2 / Spring Data
+ * Redis 4.x).
  *
  * <h3>What this starter provides:</h3>
  * <ul>
- * <li>{@link ReactiveRedisTemplate} — reactive Redis operations with JSON
- * serialization</li>
- * <li>{@link RedissonClient} — managed by Redisson's own
+ * <li>{@link ReactiveRedisTemplate} -- reactive Redis operations with Jackson 3
+ * JSON serialization</li>
+ * <li>{@link RedisCacheManager} -- Spring {@code @Cacheable} backed by Redis
+ * (TTL 5 min default)</li>
+ * <li>{@link RateLimiterService} -- Bucket4j distributed token bucket via
+ * Redisson</li>
+ * <li>{@link RedissonClient} -- managed by Redisson's own Spring Boot
  * auto-configuration</li>
- * <li>{@link RedisCacheManager} — Spring Cache abstraction backed by Redis</li>
- * <li>{@link RateLimiterService} — Bucket4j token bucket stored in Redis
- * (distributed)</li>
  * </ul>
+ *
+ * <h3>Jackson 3 serialization:</h3>
+ * Spring Boot 4 defaults to Jackson 3 ({@code tools.jackson.*}).
+ * Spring Data Redis 4.x provides
+ * {@link org.springframework.data.redis.serializer.GenericJackson3JsonRedisSerializer}
+ * for Jackson 3-native JSON serialization. This replaces the Jackson 2-era
+ * {@code GenericJackson2JsonRedisSerializer}.
  *
  * <h3>Caching usage:</h3>
  * 
- * <pre>{@code
+ * <pre>
+ * {@code
  * &#64;Cacheable(value = "user:profile", key = "#userId")
  * public Mono<UserResponse> findById(String userId) { ... }
- * }</pre>
+ *
+ * &#64;CacheEvict(value = "user:profile", key = "#userId")
+ * public Mono<UserResponse> updateProfile(String userId, ...) { ... }
+ * }
+ * </pre>
  *
  * <h3>Distributed lock usage:</h3>
  * 
  * <pre>{@code
  * RLock lock = redissonClient.getLock("lock:follow:" + userId);
  * Mono.fromCallable(() -> lock.tryLock(500, 5000, TimeUnit.MILLISECONDS))
- *         .flatMap(acquired -> acquired
- *                 ? performFollow().doFinally(s -> lock.unlock())
- *                 : Mono.error(new ConflictException("OPERATION_IN_PROGRESS")));
+ *                 .flatMap(acquired -> acquired
+ *                                 ? performFollow().doFinally(s -> lock.unlock())
+ *                                 : Mono.error(new ConflictException("OPERATION_IN_PROGRESS")));
  * }</pre>
  */
-@AutoConfiguration(after = { RedisStarterAutoConfiguration.class, RedisReactiveAutoConfiguration.class,
-        CacheAutoConfiguration.class })
+@Slf4j
+@AutoConfiguration(after = CacheAutoConfiguration.class)
 @ConditionalOnClass({ ReactiveRedisTemplate.class, RedissonClient.class })
 @EnableConfigurationProperties(RedisRateLimitProperties.class)
-@EnableCaching
 public class RedisStarterAutoConfiguration {
 
-    private static final Logger log = LoggerFactory.getLogger(RedisStarterAutoConfiguration.class);
+        /**
+         * Reactive Redis template using Jackson 3 for value serialization.
+         *
+         * <p>
+         * Spring Data Redis 4.x ships {@code GenericJackson3JsonRedisSerializer} which
+         * uses
+         * {@code tools.jackson.databind.JsonMapper} (Jackson 3). Keys are always plain
+         * strings.
+         * </p>
+         */
+        @Bean
+        @ConditionalOnMissingBean(name = "reactiveRedisTemplate")
+        public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(
+                        ReactiveRedisConnectionFactory connectionFactory,
+                        ObjectMapper objectMapper) {
 
-    /**
-     * Reactive Redis template with String keys and JSON-serialized values.
-     *
-     * <p>
-     * Uses {@link GenericJackson2JsonRedisSerializer} for values so that arbitrary
-     * objects can be stored and retrieved without explicit type mapping.
-     * </p>
-     */
-    @Bean
-    @ConditionalOnMissingBean(name = "reactiveRedisTemplate")
-    public ReactiveRedisTemplate<String, Object> reactiveRedisTemplate(
-            ReactiveRedisConnectionFactory connectionFactory) {
+                var keySerializer = new StringRedisSerializer();
 
-        StringRedisSerializer keySerializer = new StringRedisSerializer();
-        GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer();
+                var valueSerializer = new GenericJacksonJsonRedisSerializer(objectMapper);
 
-        RedisSerializationContext<String, Object> context = RedisSerializationContext
-                .<String, Object>newSerializationContext(keySerializer)
-                .value(valueSerializer)
-                .hashKey(keySerializer)
-                .hashValue(valueSerializer)
-                .build();
+                var context = RedisSerializationContext
+                                .<String, Object>newSerializationContext(keySerializer)
+                                .value(valueSerializer)
+                                .hashKey(keySerializer)
+                                .hashValue(valueSerializer)
+                                .build();
 
-        log.info("[starter-redis] Registering ReactiveRedisTemplate with JSON serialization");
-        return new ReactiveRedisTemplate<>(connectionFactory, context);
-    }
+                return new ReactiveRedisTemplate<>(connectionFactory, context);
+        }
 
-    /**
-     * Spring Cache manager backed by Redis.
-     *
-     * <p>
-     * Default TTL is 5 minutes. Null values are NOT cached.
-     * Override per cache: use {@code @Cacheable} with a custom {@code cacheManager}
-     * bean
-     * or configure {@code spring.cache.redis.time-to-live}.
-     * </p>
-     */
-    @Bean
-    @ConditionalOnMissingBean(RedisCacheManager.class)
-    public RedisCacheManager cacheManager(
-            ReactiveRedisConnectionFactory connectionFactory) {
+        /**
+         * Spring Cache manager backed by Redis with a 5-minute default TTL.
+         * Null values are not cached. All keys are prefixed with {@code xsocial:}.
+         */
+        @Bean
+        @ConditionalOnMissingBean(RedisCacheManager.class)
+        public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
+                var defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
+                                .entryTtl(Duration.ofMinutes(5))
+                                .disableCachingNullValues()
+                                .prefixCacheNameWith("xsocial:");
 
-        RedisCacheConfiguration defaultConfig = RedisCacheConfiguration.defaultCacheConfig()
-                .entryTtl(Duration.ofMinutes(5))
-                .disableCachingNullValues()
-                .prefixCacheNameWith("xsocial:");
+                return RedisCacheManager.builder(connectionFactory)
+                                .cacheDefaults(defaultConfig)
+                                .build();
+        }
 
-        log.info("[starter-redis] Registering RedisCacheManager with default TTL=5m");
-        return RedisCacheManager.builder(connectionFactory)
-                .cacheDefaults(defaultConfig)
-                .build();
-    }
+        /**
+         * Bucket4j distributed rate limiter using Redisson as the storage backend.
+         * Conditionally disabled via {@code xsocial.rate-limit.enabled=false}.
+         */
+        @Bean
+        @ConditionalOnMissingBean(RateLimiterService.class)
+        @ConditionalOnProperty(prefix = "xsocial.rate-limit", name = "enabled", matchIfMissing = true)
+        public RateLimiterService rateLimiterService(
+                        RedissonClient redissonClient,
+                        RedisRateLimitProperties properties) {
 
-    /**
-     * Bucket4j distributed rate limiter backed by Redisson.
-     * Only registered if rate limiting is enabled (default: true).
-     */
-    @Bean
-    @ConditionalOnMissingBean(RateLimiterService.class)
-    @ConditionalOnProperty(prefix = "xsocial.rate-limit", name = "enabled", matchIfMissing = true)
-    public RateLimiterService rateLimiterService(
-            RedissonClient redissonClient,
-            RedisRateLimitProperties properties) {
+                CommandAsyncExecutor executor = ((Redisson) redissonClient).getCommandExecutor();
 
-        ProxyManager<String> proxyManager = RedissonBasedProxyManager
-                .builderFor(redissonClient)
-                .build();
+                ProxyManager<String> proxyManager = RedissonBasedProxyManager
+                                .builderFor(executor)
+                                .build();
 
-        log.info("[starter-redis] Registering RateLimiterService (Bucket4j + Redisson)");
-        return new RateLimiterService(proxyManager, properties);
-    }
+                return new RateLimiterService(proxyManager, properties);
+        }
 }
