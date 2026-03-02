@@ -104,7 +104,7 @@ public class KafkaStarterAutoConfiguration {
      * {@code ReactiveKafkaConsumerTemplate} beans in services.
      *
      * <h3>Usage in a service:</h3>
-     * 
+     *
      * <pre>{@code
      * @Bean
      * public ReactiveKafkaConsumerTemplate<String, KafkaEventEnvelope<PostCreatedPayload>> postConsumer(
