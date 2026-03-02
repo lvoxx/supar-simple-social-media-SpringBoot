@@ -3,18 +3,18 @@ package io.github.lvoxx.security_starter.config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.boot.security.autoconfigure.SecurityProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.reactive.config.WebFluxConfigurer;
 import org.springframework.web.reactive.result.method.annotation.ArgumentResolverConfigurer;
 
 import io.github.lvoxx.security_starter.filter.ClaimExtractionWebFilter;
+import io.github.lvoxx.security_starter.properties.SecurityProperties;
 
 /**
  * Auto-configuration for stateless header-based security (Spring Boot 4.0.2 /
@@ -65,7 +65,7 @@ import io.github.lvoxx.security_starter.filter.ClaimExtractionWebFilter;
  * service-layer reactive chains</li>
  * </ul>
  */
-@AutoConfiguration(before = ReactiveSecurityContextHolderAutoConfiguration.class)
+@Configuration
 @ConditionalOnClass({ SecurityWebFilterChain.class, ClaimExtractionWebFilter.class })
 @EnableConfigurationProperties(SecurityProperties.class)
 public class SecurityAutoConfiguration implements WebFluxConfigurer {
