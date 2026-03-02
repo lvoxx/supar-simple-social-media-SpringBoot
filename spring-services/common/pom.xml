@@ -12,6 +12,7 @@
 
     <modules>
         <module>common-core</module>
+        <module>common-keys</module>
     </modules>
 
     <parent>
