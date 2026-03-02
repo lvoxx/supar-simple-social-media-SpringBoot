@@ -1,7 +1,3 @@
-server:
-  port: 8080
-  shutdown: graceful
----
 # Resilience4j Configuration
 resilience4j:
   circuitbreaker:

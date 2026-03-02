@@ -107,9 +107,7 @@
 
 	<modules>
 		<!-- COMMON -->
-		<module>common/common-core</module>
-		<module>common/common-keys</module>
-		<module>common/common-integration</module>
+		<module>common</module>
 		<!-- SERVICES -->
 		<module>media-service</module>
 		<module>post-service</module>
