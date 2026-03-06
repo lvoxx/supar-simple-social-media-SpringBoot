@@ -93,15 +93,15 @@ Located under `spring-documents/`:
 
 | Module | Path | Description |
 |--------|------|-------------|
-| [common-core](./modules/common-core.md) | `common/common-core` | Exceptions, ApiResponse, enums, ULID, security context |
-| [postgres-starter](./modules/starters.md#postgres-starter) | `starters/postgres-starter` | R2DBC connection pool, `ReactiveAuditorAware` |
-| [cassandra-starter](./modules/starters.md#cassandra-starter) | `starters/cassandra-starter` | Reactive Cassandra session |
-| [redis-starter](./modules/starters.md#redis-starter) | `starters/redis-starter` | ReactiveRedisTemplate, Redisson, rate limiter |
-| [kafka-starter](./modules/starters.md#kafka-starter) | `starters/kafka-starter` | Reactive Kafka producer/consumer, DLT |
-| [elasticsearch-starter](./modules/starters.md#elasticsearch-starter) | `starters/elasticsearch-starter` | Reactive ES client |
-| [metrics-starter](./modules/starters.md#metrics-starter) | `starters/metrics-starter` | Micrometer, Zipkin, MDC filter |
-| [websocket-starter](./modules/starters.md#websocket-starter) | `starters/websocket-starter` | Reactive WebSocket adapter |
-| [security-starter](./modules/starters.md#security-starter) | `starters/security-starter` | JWT claim extraction, `@CurrentUser` |
+| [common-core](./documents/common-core.md) | `common/common-core` | Exceptions, ApiResponse, enums, ULID, security context |
+| [postgres-starter](./documents/starters.md#postgres-starter) | `starters/postgres-starter` | R2DBC connection pool, `ReactiveAuditorAware` |
+| [cassandra-starter](./documents/starters.md#cassandra-starter) | `starters/cassandra-starter` | Reactive Cassandra session |
+| [redis-starter](./documents/starters.md#redis-starter) | `starters/redis-starter` | ReactiveRedisTemplate, Redisson, rate limiter |
+| [kafka-starter](./documents/starters.md#kafka-starter) | `starters/kafka-starter` | Reactive Kafka producer/consumer, DLT |
+| [elasticsearch-starter](./documents/starters.md#elasticsearch-starter) | `starters/elasticsearch-starter` | Reactive ES client |
+| [metrics-starter](./documents/starters.md#metrics-starter) | `starters/metrics-starter` | Micrometer, Zipkin, MDC filter |
+| [websocket-starter](./documents/starters.md#websocket-starter) | `starters/websocket-starter` | Reactive WebSocket adapter |
+| [security-starter](./documents/starters.md#security-starter) | `starters/security-starter` | JWT claim extraction, `@CurrentUser` |
 
 ---
 
@@ -209,5 +209,5 @@ Watches `infrastructure/helm/charts/`. Automated sync with pruning and self-heal
 | [documents/media-guard-service.md](./documents/media-guard-service.md) | media-guard-service (FastAPI) |
 | [documents/user-analysis-service.md](./documents/user-analysis-service.md) | user-analysis-service (FastAPI) |
 | [documents/ai-dashboard-service.md](./documents/ai-dashboard-service.md) | ai-dashboard-service (FastAPI) |
-| [modules/common-core.md](./modules/common-core.md) | common-core shared library |
-| [modules/starters.md](./modules/starters.md) | All starters reference |
+| [documents/common-core.md](./documents/common-core.md) | common-core shared library |
+| [documents/starters.md](./documents/starters.md) | All starters reference |
