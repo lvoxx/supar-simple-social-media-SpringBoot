@@ -355,7 +355,7 @@ Extract JWT claims from gateway-forwarded headers. Provide `UserPrincipal` recor
 
 ## COMMON-CORE SPECIFICATION
 
-Package: `com.sssm.common.core`
+Package: `io.github.lvoxx.common.core`
 
 Generate:
 

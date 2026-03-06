@@ -17,7 +17,7 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "io.github.lvoxx.*,com.sssm.*"
+        spring.json.trusted.packages: "io.github.lvoxx.*"
         isolation.level: read_committed
     listener:
       ack-mode: MANUAL_IMMEDIATE

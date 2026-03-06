@@ -8,7 +8,7 @@
 ### Package Structure
 
 ```
-com.sssm.common.core/
+io.github.lvoxx.common.core/
 ├── exception/
 │   ├── BusinessException           # Base runtime exception with error code
 │   ├── ResourceNotFoundException   # 404
@@ -48,7 +48,7 @@ com.sssm.common.core/
 ```xml
 <!-- pom.xml -->
 <dependency>
-    <groupId>com.sssm</groupId>
+    <groupId>io.github.lvoxx</groupId>
     <artifactId>common-core</artifactId>
     <version>${project.version}</version>
 </dependency>
@@ -92,7 +92,7 @@ spring:
       auto-offset-reset: earliest
       enable-auto-commit: false
       properties:
-        spring.json.trusted.packages: "com.sssm.*"
+        spring.json.trusted.packages: "io.github.lvoxx.*"
     listener:
       ack-mode: MANUAL_IMMEDIATE
       concurrency: 3
