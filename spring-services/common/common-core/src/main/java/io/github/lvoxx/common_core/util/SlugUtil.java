@@ -4,51 +4,31 @@ import java.text.Normalizer;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
+/** URL-safe slug utilities. */
 public final class SlugUtil {
-    private static final Pattern SLUG_PATTERN = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
-    private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+
+    private static final Pattern NON_LATIN = Pattern.compile("[^\\w-]");
+    private static final Pattern MULTI_DASH = Pattern.compile("-{2,}");
+    private static final Pattern VALID_SLUG = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$");
 
     private SlugUtil() {
     }
 
     /**
-     * Convert string to URL-friendly slug
-     * "Hello World!" → "hello-world"
+     * Convert arbitrary text to a URL-safe slug.
+     * Example: {@code "Hello World!"} → {@code "hello-world"}
      */
-    public static String toSlug(String input) {
-        if (input == null || input.isBlank()) {
+    public static String toSlug(String text) {
+        if (text == null || text.isBlank())
             return "";
-        }
-
-        // Convert to lowercase
-        String slug = input.toLowerCase(Locale.ENGLISH);
-
-        // Remove accents
-        String nfd = Normalizer.normalize(slug, Normalizer.Form.NFD);
-        slug = ACCENTS.matcher(nfd).replaceAll("");
-
-        // Replace spaces and underscores with hyphens
-        slug = slug.replaceAll("[\\s_]+", "-");
-
-        // Remove all non-alphanumeric characters except hyphens
-        slug = slug.replaceAll("[^a-z0-9\\-]", "");
-
-        // Remove leading/trailing hyphens
-        slug = slug.replaceAll("^-+|-+$", "");
-
-        // Replace multiple consecutive hyphens with single hyphen
-        slug = slug.replaceAll("-{2,}", "-");
-
-        return slug;
+        String normalized = Normalizer.normalize(text.trim().toLowerCase(), Normalizer.Form.NFD);
+        String slug = NON_LATIN.matcher(normalized).replaceAll("-");
+        slug = MULTI_DASH.matcher(slug).replaceAll("-");
+        return slug.replaceAll("^-|-$", "");
     }
 
-    /**
-     * Validate if string is a valid slug format
-     */
+    /** Return {@code true} if the value is a valid slug. */
     public static boolean isValidSlug(String slug) {
-        if (slug == null || slug.isBlank()) {
-            return false;
-        }
-        return SLUG_PATTERN.matcher(slug).matches();
+        return slug != null && VALID_SLUG.matcher(slug).matches();
     }
 }

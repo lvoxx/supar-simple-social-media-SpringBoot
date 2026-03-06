@@ -7,8 +7,18 @@ import java.lang.annotation.Target;
 
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
+/**
+ * Inject the authenticated {@link UserPrincipal} into a handler method
+ * parameter.
+ *
+ * <pre>{@code
+ * Mono<ApiResponse<UserResponse>> getMe(@CurrentUser UserPrincipal user) { ... }
+ * }</pre>
+ *
+ * Resolved by {@code CurrentUserArgumentResolver} registered in
+ * security-starter.
+ */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
-@AuthenticationPrincipal
 public @interface CurrentUser {
 }
