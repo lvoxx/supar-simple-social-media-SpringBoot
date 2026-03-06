@@ -74,14 +74,14 @@ x-social-platform/
 │   ├── common/
 │   │   └── common-core/               # Shared library: errors, messages, abstracts, enums
 │   ├── starters/
-│   │   ├── starter-kafka/             # Kafka reactive config + producer/consumer beans
-│   │   ├── starter-redis/             # Redis + Redisson reactive config + rate limiter
-│   │   ├── starter-elasticsearch/     # ES reactive client config
-│   │   ├── starter-metrics/           # Micrometer + Zipkin + health actuator
-│   │   ├── starter-postgres/          # R2DBC PostgreSQL config + Flyway migration
-│   │   ├── starter-cassandra/         # Reactive Cassandra config
-│   │   ├── starter-websocket/         # Reactive WebSocket config
-│   │   └── starter-security/          # JWT claim extraction (no auth, claims forwarding)
+│   │   ├── kafka-starter/             # Kafka reactive config + producer/consumer beans
+│   │   ├── redis-starter/             # Redis + Redisson reactive config + rate limiter
+│   │   ├── elasticsearch-starter/     # ES reactive client config
+│   │   ├── metrics-starter/           # Micrometer + Zipkin + health actuator
+│   │   ├── postgres-starter/          # R2DBC PostgreSQL config + Flyway migration
+│   │   ├── cassandra-starter/         # Reactive Cassandra config
+│   │   ├── websocket-starter/         # Reactive WebSocket config
+│   │   └── security-starter/          # JWT claim extraction (no auth, claims forwarding)
 │   └── services/
 │       ├── user-service/
 │       ├── media-service/
@@ -147,7 +147,7 @@ x-social-platform/
 - Keycloak issues JWT (OAuth2/OIDC).
 - **K8S Ingress/Gateway validates JWT**; services receive pre-authenticated requests.
 - All services extract claims from request headers (`X-User-Id`, `X-User-Roles`, `X-Forwarded-For`) forwarded by the gateway.
-- `starter-security` provides `ReactiveSecurityContextHolder` utilities and claim extraction filter beans (no auth logic, only context propagation).
+- `security-starter` provides `ReactiveSecurityContextHolder` utilities and claim extraction filter beans (no auth logic, only context propagation).
 
 ### 3. Soft Delete Only
 
@@ -251,7 +251,7 @@ CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--worker
 
 Generate each starter as a Spring Boot auto-configuration library with `spring.factories` / `@AutoConfiguration`.
 
-### `starter-kafka`
+### `kafka-starter`
 
 ```yaml
 # application.yaml convention
@@ -274,7 +274,7 @@ spring:
 
 Provide: `ReactiveKafkaProducerTemplate<String, Object>` bean, `ReactiveKafkaConsumerTemplate` factory, dead-letter topic config, retry policy (exponential backoff).
 
-### `starter-redis`
+### `redis-starter`
 
 ```yaml
 spring:
@@ -294,7 +294,7 @@ redisson:
 
 Provide: `ReactiveRedisTemplate<String, Object>` bean, `RedissonClient` bean, `RateLimiterService` using Bucket4j + Redisson, `@EnableCaching` with `RedisCacheManager`.
 
-### `starter-elasticsearch`
+### `elasticsearch-starter`
 
 ```yaml
 spring:
@@ -306,11 +306,11 @@ spring:
 
 Provide: `ReactiveElasticsearchClient` bean, index lifecycle management utility.
 
-### `starter-metrics`
+### `metrics-starter`
 
 Configure: Micrometer Zipkin exporter, Prometheus registry, custom `@Timed` aspects, `X-Request-Id` MDC propagation filter, JVM / HTTP / DB metrics.
 
-### `starter-postgres`
+### `postgres-starter`
 
 ```yaml
 spring:
@@ -331,7 +331,7 @@ spring:
 
 Provide: `ConnectionFactory` bean, `R2dbcEntityTemplate`, Flyway migration runner.
 
-### `starter-cassandra`
+### `cassandra-starter`
 
 ```yaml
 spring:
@@ -343,11 +343,11 @@ spring:
     schema-action: CREATE_IF_NOT_EXISTS
 ```
 
-### `starter-websocket`
+### `websocket-starter`
 
 Reactive WebSocket config with `ReactorNettyWebSocketClient`, STOMP over WebSocket via RSocket or standard WebSocket endpoint factory.
 
-### `starter-security`
+### `security-starter`
 
 Extract JWT claims from gateway-forwarded headers. Provide `UserPrincipal` record and `@CurrentUser` annotation for controllers. No `spring-security` auth filter chain — gateway already handled it.
 
@@ -655,7 +655,7 @@ DELETE /api/v1/comments/{commentId}             # Soft delete
 
 **Port:** 8085  
 **Database:** **Cassandra** (append-only, high fan-out writes, multi-device sync)  
-**Real-time delivery:** Reactive WebSocket (`starter-websocket`)  
+**Real-time delivery:** Reactive WebSocket (`websocket-starter`)  
 **Events Consumed (Kafka):** `post.created`, `post.liked`, `post.reposted`, `comment.created`, `comment.liked`, `user.followed`, `user.verified`, `media.upload.completed`  
 **Axon Events Consumed:** `UserPreferencesUpdatedEvent` → update notification delivery rules
 
@@ -952,7 +952,7 @@ group:membership:{userId}:{groupId}  TTL 5 min   # is member + role
 **Port:** 8088  
 **Database:** **Cassandra** (append-heavy writes, time-sorted, multi-participant)  
 **Cache:** Redis (conversation metadata TTL 5min, unread counts, participant lists)  
-**WebSocket:** Reactive WebSocket (`starter-websocket`) for real-time message delivery  
+**WebSocket:** Reactive WebSocket (`websocket-starter`) for real-time message delivery  
 **Events Published (Kafka):** `message.sent`, `message.delivered`, `message.read`, `message.reaction.added`, `message.reaction.removed`, `message.forwarded`, `message.deleted`, `conversation.created`, `conversation.settings.updated`  
 **Events Consumed (Kafka):** `user.profile.updated` (update cached display name/avatar), `group.member.left` (remove from group conversation if tied to group)  
 **Integration:** Calls `media-service` for media attachments in messages. Publishes message events to Kafka consumed by `message-notification-service`.

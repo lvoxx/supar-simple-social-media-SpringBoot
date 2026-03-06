@@ -55,12 +55,12 @@ public class ElasticsearchIndexManager {
         return exists(indexName)
                 .flatMap(exists -> {
                     if (exists) {
-                        log.debug("[starter-elasticsearch] Index '{}' already exists — skipping create", indexName);
+                        log.debug("[elasticsearch-starter] Index '{}' already exists — skipping create", indexName);
                         return Mono.just(false);
                     }
                     return client.indices()
                             .create(req -> req.index(indexName))
-                            .doOnSuccess(r -> log.info("[starter-elasticsearch] Index '{}' created", indexName))
+                            .doOnSuccess(r -> log.info("[elasticsearch-starter] Index '{}' created", indexName))
                             .thenReturn(true);
                 });
     }
@@ -76,7 +76,7 @@ public class ElasticsearchIndexManager {
                 .exists(req -> req.index(indexName))
                 .map(r -> r.value())
                 .onErrorResume(e -> {
-                    log.warn("[starter-elasticsearch] Failed to check index '{}': {}", indexName, e.getMessage());
+                    log.warn("[elasticsearch-starter] Failed to check index '{}': {}", indexName, e.getMessage());
                     return Mono.just(false);
                 });
     }
@@ -90,7 +90,7 @@ public class ElasticsearchIndexManager {
     public Mono<Void> delete(String indexName) {
         return client.indices()
                 .delete(req -> req.index(indexName))
-                .doOnSuccess(r -> log.warn("[starter-elasticsearch] Index '{}' deleted", indexName))
+                .doOnSuccess(r -> log.warn("[elasticsearch-starter] Index '{}' deleted", indexName))
                 .then();
     }
 }

@@ -33,7 +33,7 @@ Quản lý toàn bộ danh tính người dùng, hồ sơ cá nhân, đồ thị
 
 ## Starters sử dụng
 
-`starter-postgres` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`postgres-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

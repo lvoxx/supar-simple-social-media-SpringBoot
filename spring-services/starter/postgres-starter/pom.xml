@@ -41,7 +41,7 @@
 		<!-- Spring Security needed for ReactiveSecurityContextHolder in AuditorAware -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
+			<artifactId>spring-boot-security-starter</artifactId>
 		</dependency>
 
 		<!-- ULID -->

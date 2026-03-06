@@ -226,7 +226,7 @@ sequenceDiagram
     participant Keycloak
     participant Gateway as K8S Ingress + JWT Gateway
     participant Service
-    participant Security as starter-security Filter
+    participant Security as security-starter Filter
 
     %% 1-3: Authentication
     Client->>Keycloak: POST /auth/token
@@ -243,7 +243,7 @@ sequenceDiagram
     Gateway-->>Service: Forward request with headers:\nX-User-Id\nX-User-Roles\nX-Forwarded-For
 
     %% 6: Service processing
-    Service->>Security: starter-security filter
+    Service->>Security: security-starter filter
     Security->>Security: Build UserPrincipal\n(from injected headers)
     Security-->>Service: UserPrincipal in\n@CurrentUser / ReactorContext
     Note right of Service: No JWT validation here\n(Gateway already validated)

@@ -12,7 +12,7 @@ import reactor.core.publisher.Mono;
  * Resolves the current auditor (user ID) from the Reactor Context.
  *
  * <p>
- * The user ID is placed into the Reactor Context by {@code starter-security}'s
+ * The user ID is placed into the Reactor Context by {@code security-starter}'s
  * {@code ClaimExtractionWebFilter} using the key {@code "userId"}.
  * This bean is used by Spring Data's {@code @CreatedBy} /
  * {@code @LastModifiedBy} auditing.
@@ -29,7 +29,7 @@ public class SecurityContextReactiveAuditorAware implements ReactiveAuditorAware
     private static final Logger log = LoggerFactory.getLogger(SecurityContextReactiveAuditorAware.class);
 
     /**
-     * Context key written by starter-security's ClaimExtractionWebFilter.
+     * Context key written by security-starter's ClaimExtractionWebFilter.
      */
     static final String CONTEXT_KEY_USER_ID = "userId";
 

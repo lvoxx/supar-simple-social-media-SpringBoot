@@ -100,14 +100,14 @@ Located under `spring-services/`:
 | Module | Description |
 |--------|-------------|
 | [common-core](./modules/common-core.md) | Shared exceptions, error handlers, enums, base entities, API response wrappers |
-| [starter-kafka](./modules/starters.md#starter-kafka) | Reactive Kafka producer/consumer, DLT, retry |
-| [starter-redis](./modules/starters.md#starter-redis) | Redis + Redisson, `@Cacheable`, rate limiter |
-| [starter-elasticsearch](./modules/starters.md#starter-elasticsearch) | Reactive ES client configuration |
-| [starter-metrics](./modules/starters.md#starter-metrics) | Micrometer, Zipkin, Prometheus, health actuator |
-| [starter-postgres](./modules/starters.md#starter-postgres) | R2DBC, Flyway migration |
-| [starter-cassandra](./modules/starters.md#starter-cassandra) | Reactive Cassandra configuration |
-| [starter-websocket](./modules/starters.md#starter-websocket) | Reactive WebSocket config |
-| [starter-security](./modules/starters.md#starter-security) | JWT claim extraction, `@CurrentUser` annotation |
+| [kafka-starter](./modules/starters.md#kafka-starter) | Reactive Kafka producer/consumer, DLT, retry |
+| [redis-starter](./modules/starters.md#redis-starter) | Redis + Redisson, `@Cacheable`, rate limiter |
+| [elasticsearch-starter](./modules/starters.md#elasticsearch-starter) | Reactive ES client configuration |
+| [metrics-starter](./modules/starters.md#metrics-starter) | Micrometer, Zipkin, Prometheus, health actuator |
+| [postgres-starter](./modules/starters.md#postgres-starter) | R2DBC, Flyway migration |
+| [cassandra-starter](./modules/starters.md#cassandra-starter) | Reactive Cassandra configuration |
+| [websocket-starter](./modules/starters.md#websocket-starter) | Reactive WebSocket config |
+| [security-starter](./modules/starters.md#security-starter) | JWT claim extraction, `@CurrentUser` annotation |
 
 ---
 

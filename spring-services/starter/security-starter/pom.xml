@@ -31,7 +31,7 @@
 		<!-- Spring Security (reactive) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-security</artifactId>
+			<artifactId>spring-boot-security-starter</artifactId>
 		</dependency>
 
 		<!-- WebFlux (for WebFilter) -->

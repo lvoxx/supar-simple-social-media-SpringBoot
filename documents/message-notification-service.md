@@ -103,7 +103,7 @@ Web Push response: 404 hoặc 410
 
 ## Starters sử dụng
 
-`starter-cassandra` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`cassandra-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

@@ -100,7 +100,7 @@ User tạo post trong group:
 
 ## Starters sử dụng
 
-`starter-postgres` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`postgres-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

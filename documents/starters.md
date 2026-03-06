@@ -7,9 +7,9 @@ Tất cả starters được đăng ký qua `spring.factories` / `@AutoConfigura
 
 ---
 
-## starter-postgres
+## postgres-starter
 
-**Path:** `spring-services/starters/starter-postgres`  
+**Path:** `spring-services/starters/postgres-starter`  
 **Cung cấp:** R2DBC ConnectionFactory · R2dbcEntityTemplate · Flyway migration runner  
 **Dùng bởi:** user-service · media-service · post-service · group-service  
 
@@ -48,9 +48,9 @@ spring:
 
 ---
 
-## starter-cassandra
+## cassandra-starter
 
-**Path:** `spring-services/starters/starter-cassandra`  
+**Path:** `spring-services/starters/cassandra-starter`  
 **Cung cấp:** Reactive CqlSession · ReactiveCassandraTemplate · keyspace init  
 **Dùng bởi:** comment-service · notification-service · private-message-service · message-notification-service  
 
@@ -89,9 +89,9 @@ spring:
 
 ---
 
-## starter-redis
+## redis-starter
 
-**Path:** `spring-services/starters/starter-redis`  
+**Path:** `spring-services/starters/redis-starter`  
 **Cung cấp:** ReactiveRedisTemplate · RedissonClient · RateLimiterService · RedisCacheManager  
 **Dùng bởi:** Tất cả Spring Boot services  
 
@@ -192,9 +192,9 @@ public class RateLimitFilter implements WebFilter {
 
 ---
 
-## starter-kafka
+## kafka-starter
 
-**Path:** `spring-services/starters/starter-kafka`  
+**Path:** `spring-services/starters/kafka-starter`  
 **Cung cấp:** ReactiveKafkaProducerTemplate · DLT config · retry policy  
 **Dùng bởi:** Tất cả services có Kafka integration  
 
@@ -292,9 +292,9 @@ public class PostEventConsumer {
 
 ---
 
-## starter-elasticsearch
+## elasticsearch-starter
 
-**Path:** `spring-services/starters/starter-elasticsearch`  
+**Path:** `spring-services/starters/elasticsearch-starter`  
 **Cung cấp:** ReactiveElasticsearchClient · index lifecycle utilities  
 **Dùng bởi:** search-service  
 
@@ -319,9 +319,9 @@ spring:
 
 ---
 
-## starter-metrics
+## metrics-starter
 
-**Path:** `spring-services/starters/starter-metrics`  
+**Path:** `spring-services/starters/metrics-starter`  
 **Cung cấp:** Zipkin exporter · Prometheus registry · custom MDC filter · JVM/HTTP/DB metrics  
 **Dùng bởi:** Tất cả services  
 
@@ -377,9 +377,9 @@ requestId  ← tạo mới (ULID)
 
 ---
 
-## starter-websocket
+## websocket-starter
 
-**Path:** `spring-services/starters/starter-websocket`  
+**Path:** `spring-services/starters/websocket-starter`  
 **Cung cấp:** WebSocketHandlerAdapter · URL mapping · CORS config  
 **Dùng bởi:** notification-service · private-message-service  
 
@@ -420,9 +420,9 @@ public class NotificationWebSocketHandler implements WebSocketHandler {
 
 ---
 
-## starter-security
+## security-starter
 
-**Path:** `spring-services/starters/starter-security`  
+**Path:** `spring-services/starters/security-starter`  
 **Cung cấp:** JWT claim extraction filter · UserPrincipal builder · @CurrentUser resolver  
 **Dùng bởi:** Tất cả services  
 
@@ -448,7 +448,7 @@ K8S Gateway đã validate JWT → inject headers vào request:
   X-User-Roles: "USER,MODERATOR"
   X-Forwarded-For: "1.2.3.4"
 
-starter-security WebFilter:
+security-starter WebFilter:
   1. Đọc headers
   2. Build UserPrincipal record
   3. Lưu vào Reactor Context

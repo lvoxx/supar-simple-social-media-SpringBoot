@@ -43,7 +43,7 @@ public class ElasticsearchStarterAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public ElasticsearchIndexManager elasticsearchIndexManager(ReactiveElasticsearchClient client) {
-        log.info("[starter-elasticsearch] Registering ElasticsearchIndexManager");
+        log.info("[elasticsearch-starter] Registering ElasticsearchIndexManager");
         return new ElasticsearchIndexManager(client);
     }
 
@@ -54,7 +54,7 @@ public class ElasticsearchStarterAutoConfiguration {
     public ElasticsearchStarterMarker elasticsearchStarterMarker(
             @Value("${spring.application.name:unknown-service}") String serviceName,
             @Value("${spring.elasticsearch.uris:http://localhost:9200}") String uris) {
-        log.info("[starter-elasticsearch] Activated for service='{}' uris='{}'", serviceName, uris);
+        log.info("[elasticsearch-starter] Activated for service='{}' uris='{}'", serviceName, uris);
         return new ElasticsearchStarterMarker(serviceName, uris);
     }
 

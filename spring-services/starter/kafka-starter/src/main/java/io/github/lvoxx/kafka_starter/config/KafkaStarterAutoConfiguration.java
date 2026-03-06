@@ -36,7 +36,7 @@ import reactor.kafka.sender.SenderOptions;
  * </ul>
  *
  * <h3>Jackson 3 (Spring Boot 4):</h3>
- * Spring Kafka 4.x ({@code spring-boot-starter-kafka}) ships updated
+ * Spring Kafka 4.x ({@code spring-boot-kafka-starter}) ships updated
  * {@code JsonSerializer} / {@code JsonDeserializer} that use Jackson 3's
  * {@code tools.jackson.databind.JsonMapper} internally. No manual Jackson
  * version
@@ -95,7 +95,7 @@ public class KafkaStarterAutoConfiguration {
         // wrapper)
         props.put(JsonSerializer.ADD_TYPE_INFO_HEADERS, false);
 
-        log.info("[starter-kafka] Registering ReactiveKafkaProducerTemplate for service='{}'", applicationName);
+        log.info("[kafka-starter] Registering ReactiveKafkaProducerTemplate for service='{}'", applicationName);
         return new ReactiveKafkaProducerTemplate<>(SenderOptions.create(props));
     }
 

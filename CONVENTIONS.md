@@ -342,7 +342,7 @@ release/*    — release preparation branches
 ```
 feat(post-service): add bookmark endpoint
 fix(user-service): correct follower count decrement on unfollow
-chore(starter-kafka): upgrade kafka client to 3.7
+chore(kafka-starter): upgrade kafka client to 3.7
 test(comment-service): add testcontainer integration tests
 docs(architecture): update kafka topic list
 ```

@@ -30,7 +30,7 @@ Manages social groups: creation, membership lifecycle, roles & permissions, join
 
 ## Starters Used
 
-`starter-postgres`, `starter-redis`, `starter-kafka`, `starter-metrics`, `starter-security`
+`postgres-starter`, `redis-starter`, `kafka-starter`, `metrics-starter`, `security-starter`
 
 ## Kafka Events Published
 
@@ -266,7 +266,7 @@ Privacy: if user.settings.readReceipts = false → UPDATE still saved internally
 
 ## Starters Used
 
-`starter-cassandra`, `starter-redis`, `starter-kafka`, `starter-metrics`, `starter-security`, `starter-websocket`
+`cassandra-starter`, `redis-starter`, `kafka-starter`, `metrics-starter`, `security-starter`, `websocket-starter`
 
 ## Kafka Events Published
 
@@ -454,7 +454,7 @@ CREATE TABLE message_notification_log (
 
 ## Starters Used
 
-`starter-cassandra`, `starter-redis`, `starter-kafka`, `starter-metrics`, `starter-security`
+`cassandra-starter`, `redis-starter`, `kafka-starter`, `metrics-starter`, `security-starter`
 
 ## Kafka Topics Consumed
 

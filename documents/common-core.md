@@ -317,7 +317,7 @@ public final class UlidGenerator {
 ### `ReactiveContextUtil`
 ```java
 public final class ReactiveContextUtil {
-    // Extract UserPrincipal từ Reactor Context (propagated bởi starter-security)
+    // Extract UserPrincipal từ Reactor Context (propagated bởi security-starter)
     public static Mono<UserPrincipal> getCurrentUser() {
         return Mono.deferContextual(ctx -> 
             Mono.justOrEmpty(ctx.getOrEmpty(UserPrincipal.class)));

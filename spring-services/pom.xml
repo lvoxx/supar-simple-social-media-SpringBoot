@@ -209,7 +209,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-cassandra</artifactId>
+				<artifactId>spring-boot-cassandra-starter</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
@@ -239,7 +239,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-kafka</artifactId>
+				<artifactId>spring-boot-kafka-starter</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
@@ -259,7 +259,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-elasticsearch</artifactId>
+				<artifactId>spring-boot-elasticsearch-starter</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
@@ -279,7 +279,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-websocket</artifactId>
+				<artifactId>spring-boot-websocket-starter</artifactId>
 				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
@@ -404,7 +404,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-cassandra-test</artifactId>
+				<artifactId>spring-boot-cassandra-starter-test</artifactId>
 				<version>${spring-boot.version}</version>
 				<scope>test</scope>
 			</dependency>
@@ -428,7 +428,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-elasticsearch-test</artifactId>
+				<artifactId>spring-boot-elasticsearch-starter-test</artifactId>
 				<version>${spring-boot.version}</version>
 				<scope>test</scope>
 			</dependency>
@@ -452,7 +452,7 @@
 			</dependency>
 			<dependency>
 				<groupId>org.springframework.boot</groupId>
-				<artifactId>spring-boot-starter-websocket-test</artifactId>
+				<artifactId>spring-boot-websocket-starter-test</artifactId>
 				<version>${spring-boot.version}</version>
 				<scope>test</scope>
 			</dependency>

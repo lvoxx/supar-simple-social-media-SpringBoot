@@ -64,7 +64,7 @@ public class WebSocketAutoConfiguration {
     public WebSocketService webSocketService(WebSocketProperties properties) {
         var strategy = new ReactorNettyRequestUpgradeStrategy();
         var service = new HandshakeWebSocketService(strategy);
-        log.info("[starter-websocket] Registering WebSocketService maxTextSize={}B maxBinarySize={}B",
+        log.info("[websocket-starter] Registering WebSocketService maxTextSize={}B maxBinarySize={}B",
                 properties.getMaxTextMessageSize(), properties.getMaxBinaryMessageSize());
         return service;
     }
@@ -76,7 +76,7 @@ public class WebSocketAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(WebSocketHandlerAdapter.class)
     public WebSocketHandlerAdapter webSocketHandlerAdapter(WebSocketService webSocketService) {
-        log.info("[starter-websocket] Registering WebSocketHandlerAdapter");
+        log.info("[websocket-starter] Registering WebSocketHandlerAdapter");
         return new WebSocketHandlerAdapter(webSocketService);
     }
 
@@ -87,7 +87,7 @@ public class WebSocketAutoConfiguration {
     public WebSocketStarterMarker webSocketStarterMarker(
             @Value("${spring.application.name:unknown-service}") String serviceName,
             WebSocketProperties properties) {
-        log.info("[starter-websocket] Activated for service='{}' allowedOrigins={}",
+        log.info("[websocket-starter] Activated for service='{}' allowedOrigins={}",
                 serviceName, properties.getAllowedOrigins());
         return new WebSocketStarterMarker(serviceName);
     }

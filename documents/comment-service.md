@@ -54,7 +54,7 @@ Giới hạn độ sâu = **3 cấp** — enforced ở service layer khi tạo r
 
 ## Starters sử dụng
 
-`starter-cassandra` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`cassandra-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

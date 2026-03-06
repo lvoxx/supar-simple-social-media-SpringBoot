@@ -53,7 +53,7 @@ public class MetricsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(name = "commonTagsMeterRegistryCustomizer")
     public MeterRegistryCustomizer<MeterRegistry> commonTagsMeterRegistryCustomizer() {
-        log.info("[starter-metrics] Applying global meter tags: service='{}' env='{}'", serviceName, activeProfile);
+        log.info("[metrics-starter] Applying global meter tags: service='{}' env='{}'", serviceName, activeProfile);
         return registry -> registry.config().commonTags(List.of(
                 Tag.of("service", serviceName),
                 Tag.of("env", activeProfile)));
@@ -66,7 +66,7 @@ public class MetricsAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean(MdcContextWebFilter.class)
     public MdcContextWebFilter mdcContextWebFilter() {
-        log.info("[starter-metrics] Registering MdcContextWebFilter");
+        log.info("[metrics-starter] Registering MdcContextWebFilter");
         return new MdcContextWebFilter();
     }
 }

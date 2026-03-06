@@ -95,7 +95,7 @@ Consume Kafka events và tạo `POST_TYPE = AUTO`:
 
 ## Starters sử dụng
 
-`starter-postgres` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`postgres-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

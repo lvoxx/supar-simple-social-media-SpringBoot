@@ -25,7 +25,7 @@ Manages all user identity, profile, social graph (follow/unfollow), account sett
 
 ## Starters Used
 
-`starter-postgres`, `starter-redis`, `starter-kafka`, `starter-metrics`, `starter-security`, `starter-websocket` (for live settings sync)
+`postgres-starter`, `redis-starter`, `kafka-starter`, `metrics-starter`, `security-starter`, `websocket-starter` (for live settings sync)
 
 ## Kafka Events Published
 

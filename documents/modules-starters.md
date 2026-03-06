@@ -68,9 +68,9 @@ public Mono<ApiResponse<UserResponse>> getUser(
 
 ---
 
-## starter-kafka
+## kafka-starter
 
-**Location:** `spring-services/starters/starter-kafka`  
+**Location:** `spring-services/starters/kafka-starter`  
 **Auto-configured beans:** `ReactiveKafkaProducerTemplate`, DLT config, retry policy.
 
 ### application.yaml config
@@ -125,9 +125,9 @@ public class PostEventPublisher {
 
 ---
 
-## starter-redis
+## redis-starter
 
-**Location:** `spring-services/starters/starter-redis`  
+**Location:** `spring-services/starters/redis-starter`  
 **Auto-configured beans:** `ReactiveRedisTemplate`, `RedissonClient`, `RateLimiterService`, `CacheManager`.
 
 ### application.yaml config
@@ -213,9 +213,9 @@ public class RateLimitFilter implements WebFilter {
 
 ---
 
-## starter-elasticsearch
+## elasticsearch-starter
 
-**Location:** `spring-services/starters/starter-elasticsearch`  
+**Location:** `spring-services/starters/elasticsearch-starter`  
 **Auto-configured beans:** `ReactiveElasticsearchClient`, index lifecycle utilities.
 
 ### application.yaml config
@@ -232,9 +232,9 @@ spring:
 
 ---
 
-## starter-metrics
+## metrics-starter
 
-**Location:** `spring-services/starters/starter-metrics`  
+**Location:** `spring-services/starters/metrics-starter`  
 **Auto-configured:** Zipkin exporter, Prometheus, JVM metrics, HTTP metrics, DB metrics, custom MDC filter.
 
 ### application.yaml config
@@ -266,9 +266,9 @@ management:
 
 ---
 
-## starter-postgres
+## postgres-starter
 
-**Location:** `spring-services/starters/starter-postgres`  
+**Location:** `spring-services/starters/postgres-starter`  
 **Auto-configured:** R2DBC `ConnectionFactory`, `R2dbcEntityTemplate`, Flyway runner.
 
 ### application.yaml config
@@ -296,9 +296,9 @@ spring:
 
 ---
 
-## starter-cassandra
+## cassandra-starter
 
-**Location:** `spring-services/starters/starter-cassandra`  
+**Location:** `spring-services/starters/cassandra-starter`  
 **Auto-configured:** Reactive `CqlSession`, `ReactiveCassandraTemplate`, keyspace init.
 
 ### application.yaml config
@@ -324,9 +324,9 @@ spring:
 
 ---
 
-## starter-websocket
+## websocket-starter
 
-**Location:** `spring-services/starters/starter-websocket`  
+**Location:** `spring-services/starters/websocket-starter`  
 **Auto-configured:** `WebSocketHandlerAdapter`, `SimpleUrlHandlerMapping`, CORS config for WS.
 
 ### application.yaml config
@@ -341,9 +341,9 @@ sssm:
 
 ---
 
-## starter-security
+## security-starter
 
-**Location:** `spring-services/starters/starter-security`  
+**Location:** `spring-services/starters/security-starter`  
 **Purpose:** Extract JWT claims from gateway-forwarded headers. NO auth validation (handled by K8S gateway).  
 **Auto-configured:** `UserPrincipalFilter` (WebFilter), `ReactiveSecurityContextHolder` setup, `@CurrentUser` resolver.
 
@@ -355,7 +355,7 @@ Incoming request headers (injected by K8S gateway):
   X-User-Roles: USER,MODERATOR
   X-Forwarded-For: 1.2.3.4
 
-starter-security filter:
+security-starter filter:
   1. Reads these headers
   2. Builds UserPrincipal record
   3. Stores in Reactor Context

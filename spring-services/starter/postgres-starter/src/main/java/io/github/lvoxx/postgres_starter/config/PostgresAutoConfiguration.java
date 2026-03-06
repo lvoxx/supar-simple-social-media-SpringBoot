@@ -41,7 +41,7 @@ import io.github.lvoxx.postgres_starter.properties.PostgresProperties;
  * <h3>Auditing:</h3>
  * Entities get {@code created_by} / {@code updated_by} auto-populated from the
  * Reactor Context,
- * which is seeded by {@code starter-security}'s
+ * which is seeded by {@code security-starter}'s
  * {@code ClaimExtractionWebFilter}.
  */
 @AutoConfiguration(after = R2dbcAutoConfiguration.class)
@@ -56,21 +56,21 @@ public class PostgresAutoConfiguration {
     /**
      * Reactive auditor bean that resolves the current user's UUID from Reactor
      * Context.
-     * Populated by {@code starter-security}'s {@code ClaimExtractionWebFilter} on
+     * Populated by {@code security-starter}'s {@code ClaimExtractionWebFilter} on
      * every request.
      */
     @Bean
     @ConditionalOnMissingBean(ReactiveAuditorAware.class)
     @ConditionalOnProperty(prefix = "sssm.postgres", name = "auditor-enabled", matchIfMissing = true)
     public ReactiveAuditorAware<UUID> reactiveAuditorAware() {
-        log.info("[starter-postgres] Registering SecurityContextReactiveAuditorAware");
+        log.info("[postgres-starter] Registering SecurityContextReactiveAuditorAware");
         return new SecurityContextReactiveAuditorAware();
     }
 
     @Bean
     public PostgresStarterMarker postgresStarterMarker(
             @Value("${spring.application.name:unknown-service}") String serviceName) {
-        log.info("[starter-postgres] Activated for service='{}'", serviceName);
+        log.info("[postgres-starter] Activated for service='{}'", serviceName);
         return new PostgresStarterMarker(serviceName);
     }
 

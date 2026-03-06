@@ -78,7 +78,7 @@ public class ClaimExtractionWebFilter implements WebFilter, Ordered {
         // No userId header — the gateway should have rejected this, but we guard here
         // too
         if (rawUserId == null || rawUserId.isBlank()) {
-            log.warn("[starter-security] Missing {} header for path='{}'",
+            log.warn("[security-starter] Missing {} header for path='{}'",
                     properties.getUserIdHeader(), path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
@@ -87,12 +87,12 @@ public class ClaimExtractionWebFilter implements WebFilter, Ordered {
         UserPrincipal principal = UserPrincipal.of(rawUserId, rawRoles, ip);
 
         if (!principal.isAuthenticated()) {
-            log.warn("[starter-security] Invalid userId='{}' for path='{}'", rawUserId, path);
+            log.warn("[security-starter] Invalid userId='{}' for path='{}'", rawUserId, path);
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        log.debug("[starter-security] Authenticated userId='{}' roles={} path='{}'",
+        log.debug("[security-starter] Authenticated userId='{}' roles={} path='{}'",
                 principal.userId(), principal.roles(), path);
 
         return chain.filter(exchange)

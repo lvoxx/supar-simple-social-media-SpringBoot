@@ -68,7 +68,7 @@ Dịch vụ lưu trữ và xử lý media trung tâm. Tiếp nhận file upload,
 
 ## Starters sử dụng
 
-`starter-postgres` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security`
+`postgres-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter`
 
 ---
 

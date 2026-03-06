@@ -236,7 +236,7 @@ Lưu trong `user-service.notification_settings.message`. Propagate sang cache qu
 
 ## Starters sử dụng
 
-`starter-cassandra` · `starter-redis` · `starter-kafka` · `starter-metrics` · `starter-security` · `starter-websocket`
+`cassandra-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter` · `websocket-starter`
 
 ---
 

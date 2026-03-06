@@ -59,7 +59,7 @@ public class CassandraStarterAutoConfiguration {
     public ReactiveCassandraTemplate reactiveCassandraTemplate(
             ReactiveSessionFactory reactiveSessionFactory,
             CassandraConverter cassandraConverter) {
-        log.info("[starter-cassandra] Registering ReactiveCassandraTemplate");
+        log.info("[cassandra-starter] Registering ReactiveCassandraTemplate");
         return new ReactiveCassandraTemplate(reactiveSessionFactory, cassandraConverter);
     }
 
@@ -94,7 +94,7 @@ public class CassandraStarterAutoConfiguration {
     public CassandraStarterMarker cassandraStarterMarker(
             @Value("${spring.application.name:unknown-service}") String serviceName,
             @Value("${spring.cassandra.keyspace-name:x_social}") String keyspace) {
-        log.info("[starter-cassandra] Activated for service='{}' keyspace='{}'", serviceName, keyspace);
+        log.info("[cassandra-starter] Activated for service='{}' keyspace='{}'", serviceName, keyspace);
         return new CassandraStarterMarker(serviceName, keyspace);
     }
 

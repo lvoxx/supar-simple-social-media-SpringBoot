@@ -36,7 +36,7 @@ import io.github.lvoxx.security_starter.properties.SecurityProperties;
  * Spring Boot's
  * reactive security auto-configuration
  * ({@code ReactiveSecurityAutoConfiguration}) activates
- * automatically when {@code spring-boot-starter-security} is on the classpath
+ * automatically when {@code spring-boot-security-starter} is on the classpath
  * with WebFlux.
  * Adding {@code @EnableWebFluxSecurity} on top would create a
  * double-configuration conflict.
@@ -129,7 +129,7 @@ public class SecurityAutoConfiguration implements WebFluxConfigurer {
     @Bean
     @ConditionalOnMissingBean(ClaimExtractionWebFilter.class)
     public ClaimExtractionWebFilter claimExtractionWebFilter() {
-        log.info("[starter-security] Registering ClaimExtractionWebFilter (order={})",
+        log.info("[security-starter] Registering ClaimExtractionWebFilter (order={})",
                 ClaimExtractionWebFilter.ORDER);
         return new ClaimExtractionWebFilter(properties);
     }
@@ -141,7 +141,7 @@ public class SecurityAutoConfiguration implements WebFluxConfigurer {
     @Bean
     @ConditionalOnMissingBean(CurrentUserArgumentResolver.class)
     public CurrentUserArgumentResolver currentUserArgumentResolver() {
-        log.info("[starter-security] Registering CurrentUserArgumentResolver");
+        log.info("[security-starter] Registering CurrentUserArgumentResolver");
         return new CurrentUserArgumentResolver();
     }
 
@@ -154,7 +154,7 @@ public class SecurityAutoConfiguration implements WebFluxConfigurer {
     @Bean
     public SecurityStarterMarker securityStarterMarker(
             @Value("${spring.application.name:unknown-service}") String serviceName) {
-        log.info("[starter-security] Activated for service='{}' anonymousPaths={}",
+        log.info("[security-starter] Activated for service='{}' anonymousPaths={}",
                 serviceName, properties.getAnonymousPaths());
         return new SecurityStarterMarker(serviceName);
     }
