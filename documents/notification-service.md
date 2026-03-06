@@ -1,187 +1,222 @@
 # notification-service
 
-**Type:** Spring Boot  
-**Port:** `8085`  
-**Module path:** `spring-services/services/notification-service`  
-**Database:** Apache Cassandra (reactive)  
-**Cache:** Redis  
-**Messaging:** Kafka (consumer) · Axon (event consumer)  
-**Real-time:** Reactive WebSocket  
+**Type:** Spring Boot · Port `8085`  
+**Primary DB:** Apache Cassandra — keyspace `x_social_notifications`  
+**Cache:** Redis (Pub/Sub for cross-pod WS routing)  
+**Starters:** `cassandra-starter` `redis-starter` `kafka-starter` `metrics-starter` `security-starter` `websocket-starter`
 
 ---
 
-## Trách nhiệm
+## Responsibilities
 
-Fan-out thông báo từ tất cả domain events đến người dùng. Đẩy real-time qua WebSocket và đồng bộ trạng thái đã đọc giữa nhiều thiết bị.
-
----
-
-## Lý do chọn Cassandra
-
-| Tiêu chí | Lý do |
-|----------|-------|
-| Fan-out writes | Một event có thể tạo hàng ngàn notification (viral post) |
-| Time-sorted | `TIMEUUID` clustering key — luôn lấy thông báo mới nhất |
-| Multi-device sync | Append-only, không cần transaction phức tạp |
-| TTL | Notification cũ tự động expire sau 90 ngày |
+Fan-out in-app notifications to users. Real-time delivery via reactive WebSocket. Multi-device read-state sync via Redis Pub/Sub across pods.
 
 ---
 
-## Kafka Events Consumed
+## DB init
 
-| Topic | Hành động |
-|-------|-----------|
-| `post.created` | Notify followers của author |
-| `post.liked` | Notify post owner |
-| `post.reposted` | Notify post owner |
-| `comment.created` | Notify post owner + mentioned users |
-| `comment.liked` | Notify comment owner |
-| `user.followed` | Notify target user |
-| `user.verified` | Notify verified user |
-| `media.upload.completed` | Notify post/user owner |
-| `notification.read` | Multi-device sync — đồng bộ trạng thái đọc |
-| `group.member.joined` | Notify group admins |
-| `group.post.pinned` | Notify group members |
-| `conversation.created` | Notify invited participants |
+K8S `InitContainer` runs `cqlsh`.  
+Scripts: `infrastructure/k8s/db-init/notification-service/cql/`  
+`spring.cassandra.schema-action: NONE`
 
 ---
 
-## Axon Events Consumed
-
-| Event | Hành động |
-|-------|-----------|
-| `UserPreferencesUpdatedEvent` | Cập nhật notification delivery rules per user |
-
----
-
-## Cassandra Schema
+## Schema (keyspace `x_social_notifications`)
 
 ```cql
--- Notifications per user (primary read path)
 CREATE TABLE notifications_by_user (
-  user_id           UUID,
-  notification_id   TIMEUUID,
-  type              TEXT,        -- LIKE|COMMENT|FOLLOW|MENTION|REPOST|SYSTEM|GROUP_JOIN|PINNED_POST
-  actor_id          UUID,
-  actor_username    TEXT,
-  actor_avatar_url  TEXT,
-  entity_type       TEXT,        -- POST|COMMENT|USER|GROUP
-  entity_id         UUID,
-  message           TEXT,
-  deep_link         TEXT,        -- frontend route: /post/xxx
-  is_read           BOOLEAN DEFAULT FALSE,
-  is_deleted        BOOLEAN DEFAULT FALSE,
-  delivered_at      TIMESTAMP,
-  created_at        TIMESTAMP,
+  user_id          UUID,
+  notification_id  TIMEUUID,
+  type             TEXT,
+  actor_id         UUID,
+  actor_username   TEXT,
+  actor_avatar_url TEXT,
+  entity_type      TEXT,
+  entity_id        UUID,
+  message          TEXT,
+  deep_link        TEXT,
+  is_read          BOOLEAN   DEFAULT FALSE,
+  is_deleted       BOOLEAN   DEFAULT FALSE,
+  delivered_at     TIMESTAMP,
+  created_at       TIMESTAMP,
   PRIMARY KEY (user_id, notification_id)
 ) WITH CLUSTERING ORDER BY (notification_id DESC)
-  AND default_time_to_live = 7776000;   -- 90 ngày TTL
+  AND default_time_to_live = 7776000;    -- 90 days TTL
 
--- Device WebSocket sessions (routing cho multi-device)
 CREATE TABLE device_sessions (
-  user_id           UUID,
-  device_id         UUID,
-  session_token     TEXT,
-  platform          TEXT,        -- WEB|ANDROID|IOS
-  pod_id            TEXT,        -- K8S pod ID để route WS message
-  last_active       TIMESTAMP,
+  user_id     UUID,
+  device_id   UUID,
+  pod_id      TEXT,         -- K8S pod for WS routing
+  platform    TEXT,
+  last_active TIMESTAMP,
   PRIMARY KEY (user_id, device_id)
 );
 ```
 
 ---
 
-## WebSocket Protocol
+## WebSocket protocol
 
 ```
-Connect:  WS /ws/notifications
-  Headers: X-User-Id (từ gateway)
+Connect: WS /ws/notifications
 
-Server → Client events:
-  NOTIFICATION {
-    id, type, message, deepLink,
-    actor: { id, username, avatarUrl },
-    timestamp
-  }
-  READ_STATE_UPDATE { notificationIds: [...] }
-  UNREAD_COUNT_UPDATE { count: 5 }
+Server → Client:
+  NOTIFICATION        { id, type, message, deepLink, actor, timestamp }
+  READ_STATE_UPDATE   { notificationIds }
+  UNREAD_COUNT_UPDATE { count }
 
 Client → Server:
   PING
   MARK_READ { notificationId }
 ```
 
-### Multi-device Read Sync
-
+**Multi-device read sync:**
 ```
-Thiết bị A đọc notification:
-  1. PUT /api/v1/notifications/{id}/read
-  2. Cập nhật Cassandra is_read = true
-  3. Publish Kafka: notification.read { userId, notificationId }
-  4. notification-service consumer nhận event
-  5. Push READ_STATE_UPDATE tới tất cả WebSocket session của userId
-     (cross-pod routing qua Redis Pub/Sub)
+Device A marks read → Cassandra is_read=true
+→ Publish Kafka: notification.read { userId, notificationId }
+→ consumer pushes READ_STATE_UPDATE to all other user sessions via Redis Pub/Sub
 ```
 
 ---
 
-## Fan-out Strategy
+## Kafka consumed
 
-```
-Nhận Kafka event (ví dụ: post.liked):
-  1. Load danh sách recipient (thường là 1 user — owner)
-  2. Kiểm tra UserPreferences: loại notification này có được bật không?
-  3. Tạo notification record trong Cassandra
-  4. Nếu user đang online (WebSocket session tồn tại):
-     → Push trực tiếp qua WebSocket
-  5. Nếu user offline:
-     → Notification được lưu trong Cassandra, load khi user quay lại
-  6. Cập nhật unread count trong Redis: INCR notif:unread:{userId}
-```
+`post.liked` · `post.reposted` · `post.created` · `comment.created` · `comment.liked` · `user.followed` · `user.verified` · `media.upload.completed` · `notification.read` · `group.member.joined` · `group.post.pinned` · `conversation.created`
+
+Axon: `UserPreferencesUpdatedEvent` → update per-user notification delivery rules
 
 ---
 
-## API Endpoints
+## API
 
 ```
-# Danh sách thông báo
 GET    /api/v1/notifications
-  Params: ?limit=20&cursor={lastNotifId}&type=ALL|LIKE|COMMENT|...
-
-# Đánh dấu đã đọc
 POST   /api/v1/notifications/read-all
 PUT    /api/v1/notifications/{id}/read
 GET    /api/v1/notifications/unread-count
-
-# Xóa
-DELETE /api/v1/notifications/{id}            # soft delete
-
-# WebSocket
+DELETE /api/v1/notifications/{id}
 WS     /ws/notifications
 ```
 
 ---
 
-## Cache Keys
+## Cache keys
 
-| Key | TTL | Mô tả |
-|-----|-----|-------|
-| `notif:unread:{userId}` | 5 phút | Số thông báo chưa đọc |
-| `notif:settings:{userId}` | 10 phút | Notification preferences |
-| `notif:ws-sessions:{userId}` | 30 giây | Danh sách pod có WS session |
+| Key | TTL |
+|-----|-----|
+| `notif:unread:{userId}` | 5 min |
+| `notif:settings:{userId}` | 10 min |
+| `notif:ws-sessions:{userId}` | 30 s |
 
 ---
 
 ## Tests
 
-### Unit Tests
-- `NotificationFanoutServiceTest` — mock Cassandra repository
-- `UserPreferenceFilterTest` — kiểm tra logic lọc theo preferences
+- **Unit:** `NotificationFanoutServiceTest`, `UserPreferenceFilterTest`
+- **Integration:** Cassandra + Redis + Kafka containers
+- **Automation:** Kafka event → notification stored → WS push → mark read → multi-device sync
 
-### Integration Tests (Testcontainers)
-- `NotificationRepositoryIT` — Cassandra container
-- `NotificationKafkaConsumerIT` — Cassandra + Kafka
-- `WebSocketDeliveryIT` — Cassandra + Redis + WebSocket test client
+---
+---
 
-### Automation Tests
-- `NotificationApiAutomationTest` — Kafka event → notification created → mark read → multi-device sync
+# search-service
+
+**Type:** Spring Boot · Port `8086`  
+**Primary DB:** Elasticsearch 8 — dedicated cluster  
+**Cache:** Redis  
+**Starters:** `elasticsearch-starter` `redis-starter` `kafka-starter` `metrics-starter` `security-starter`
+
+---
+
+## Responsibilities
+
+Full-text search (posts, users, hashtags, groups), autocomplete, trending hashtags. Maintains denormalised search indices fed by Kafka CDC events. **Owns only Elasticsearch — no PostgreSQL/Cassandra schema.**
+
+---
+
+## DB init
+
+K8S `Job` calls ES REST API to create indices.  
+Mapping files: `infrastructure/k8s/db-init/search-service/mappings/`
+
+```
+users_v1.json
+posts_v1.json
+hashtags_v1.json
+groups_v1.json
+```
+
+---
+
+## Index overview
+
+| Index | Refresh | Primary query |
+|-------|---------|---------------|
+| `users_v1` | 1 s | Username, displayName, bio, verified |
+| `posts_v1` | 1 s | Content, hashtags, mentions, groupId |
+| `hashtags_v1` | 10 s | Tag name, trending score |
+| `groups_v1` | 5 s | Name, description, tags, category |
+
+---
+
+## CDC sync (Kafka → ES)
+
+Bulk flush every 5 s. Individually indexed writes are batched to avoid per-document overhead.
+
+| Topic consumed | ES action |
+|----------------|-----------|
+| `post.created` | Index document |
+| `post.updated` | Update document |
+| `post.deleted` | Set `isDeleted=true` |
+| `post.liked` | Script-update `likeCount` |
+| `post.reposted` | Script-update `repostCount` |
+| `user.profile.updated` | Update user document |
+| `user.verified` | Set `isVerified=true` |
+| `group.created` | Index document |
+| `group.updated` | Update document |
+| `group.deleted` | Set `isDeleted=true` |
+| `group.post.created` | Tag post with `groupId` |
+| `comment.created` | Index (if comment search enabled) |
+
+---
+
+## Trending hashtag algorithm
+
+```
+Every 10 s:
+  raw  = Σ(like_count × 2 + repost_count × 3) for posts with this tag in last 24 h
+  score = raw / (hours_since_first_use / 24 + 1)   ← time decay
+
+Top-50 cached  Redis key: search:trending:hashtags  TTL 1 min
+```
+
+---
+
+## API
+
+```
+GET  /api/v1/search?q=&type=ALL|USERS|POSTS|HASHTAGS|GROUPS&page=&size=
+GET  /api/v1/search/trending/hashtags?limit=10&period=1h|6h|24h
+GET  /api/v1/search/suggestions?q=
+GET  /api/v1/search/users?q=&verified=
+GET  /api/v1/search/posts?q=&from=&to=&authorId=&groupId=
+GET  /api/v1/search/groups?q=&tags=&category=
+POST /api/v1/search/admin/reindex         # ADMIN only
+GET  /api/v1/search/admin/index-stats
+```
+
+---
+
+## Cache keys
+
+| Key | TTL |
+|-----|-----|
+| `search:trending:hashtags` | 1 min |
+| `search:result:{queryHash}` | 30 s |
+| `search:suggestions:{prefix}` | 1 min |
+
+---
+
+## Tests
+
+- **Unit:** `SearchQueryBuilderTest`, `TrendingScoreCalculatorTest`, `BulkIndexPipelineTest`

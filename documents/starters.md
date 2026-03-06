@@ -1,19 +1,23 @@
 # Starters — Module Reference
 
 **Location:** `spring-services/starters/`  
-**Type:** Spring Boot Auto-configuration Libraries  
+**Naming convention:** `<technology>-starter`  
+**Registration:** `META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports`
 
-Tất cả starters được đăng ký qua `spring.factories` / `@AutoConfiguration`. Services chỉ cần add dependency là được auto-configure.
+Each starter is configured entirely through `application.yaml` in the consuming service.  
+`@Bean` methods are written **only** for types that Spring Boot auto-configuration does not provide.
 
 ---
 
 ## postgres-starter
 
-**Path:** `spring-services/starters/postgres-starter`  
-**Cung cấp:** R2DBC ConnectionFactory · R2dbcEntityTemplate · Flyway migration runner  
-**Dùng bởi:** user-service · media-service · post-service · group-service  
+**Path:** `starters/postgres-starter`  
+**Used by:** user-service · media-service · post-service · group-service  
+**Spring auto-config leveraged:** `R2dbcAutoConfiguration`, `R2dbcRepositoriesAutoConfiguration`
 
-### application.yaml
+> Schema is **not** initialised here. A K8S `Job` runs Flyway CLI before the service Pod starts.
+
+### application.yaml (consuming service)
 
 ```yaml
 spring:
@@ -27,45 +31,41 @@ spring:
       max-idle-time: 30m
       max-acquire-time: 5s
       validation-query: SELECT 1
-  flyway:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME}
-    user: ${DB_USER}
-    password: ${DB_PASSWORD}
-    locations: classpath:db/migration
-    baseline-on-migrate: true
-    validate-on-migrate: true
-    out-of-order: false
 ```
 
-### Beans auto-configured
+### @Bean (not expressible in YAML)
 
 ```java
-@Bean ConnectionFactory connectionFactory()           // R2DBC pool
-@Bean R2dbcEntityTemplate r2dbcEntityTemplate()       // reactive template
-@Bean ReactiveAuditorAware<UUID> auditorAware()       // createdBy / updatedBy từ security context
-@Bean Flyway flyway()                                  // migration runner (blocking, chỉ run khi start)
+// ReactiveAuditorAware reads the current userId from Reactor Context.
+// Spring has no YAML binding for this — it requires custom code.
+@Bean
+ReactiveAuditorAware<UUID> auditorAware() {
+    return () -> ReactiveContextUtil.getCurrentUserId().defaultIfEmpty(SYSTEM_USER_ID);
+}
 ```
 
 ---
 
 ## cassandra-starter
 
-**Path:** `spring-services/starters/cassandra-starter`  
-**Cung cấp:** Reactive CqlSession · ReactiveCassandraTemplate · keyspace init  
-**Dùng bởi:** comment-service · notification-service · private-message-service · message-notification-service  
+**Path:** `starters/cassandra-starter`  
+**Used by:** comment-service · notification-service · private-message-service · message-notification-service  
+**Spring auto-config leveraged:** `CassandraAutoConfiguration`, `CassandraReactiveRepositoriesAutoConfiguration`
 
-### application.yaml
+> Keyspace and tables are **not** created here. A K8S `InitContainer` runs `cqlsh` scripts before the Pod starts.
+
+### application.yaml (consuming service)
 
 ```yaml
 spring:
   cassandra:
     contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
     port: ${CASSANDRA_PORT:9042}
-    keyspace-name: ${CASSANDRA_KEYSPACE:x_social}
+    keyspace-name: ${CASSANDRA_KEYSPACE}
     local-datacenter: datacenter1
     username: ${CASSANDRA_USER:cassandra}
     password: ${CASSANDRA_PASSWORD:cassandra}
-    schema-action: CREATE_IF_NOT_EXISTS
+    schema-action: NONE        # schema managed by K8S — never by the service
     request:
       timeout: 10s
       consistency: LOCAL_QUORUM
@@ -74,28 +74,19 @@ spring:
     connection:
       connect-timeout: 5s
       init-query-timeout: 10s
-    pool:
-      local:
-        size: 1
 ```
 
-### Beans auto-configured
-
-```java
-@Bean CqlSession cqlSession()
-@Bean ReactiveCassandraTemplate reactiveCassandraTemplate()
-@Bean CassandraConverter cassandraConverter()
-```
+No custom `@Bean` needed — Spring Boot auto-configuration is sufficient.
 
 ---
 
 ## redis-starter
 
-**Path:** `spring-services/starters/redis-starter`  
-**Cung cấp:** ReactiveRedisTemplate · RedissonClient · RateLimiterService · RedisCacheManager  
-**Dùng bởi:** Tất cả Spring Boot services  
+**Path:** `starters/redis-starter`  
+**Used by:** All Spring Boot services  
+**Spring auto-config leveraged:** `RedisAutoConfiguration`, `RedisReactiveAutoConfiguration`, `CacheAutoConfiguration`
 
-### application.yaml
+### application.yaml (consuming service)
 
 ```yaml
 spring:
@@ -109,13 +100,12 @@ spring:
           max-active: 16
           max-idle: 8
           min-idle: 2
-          time-between-eviction-runs: 60s
   cache:
     type: redis
     redis:
       time-to-live: 300s
       cache-null-values: false
-      key-prefix: "sssm:"
+      key-prefix: "${spring.application.name}:"
 
 redisson:
   single-server-config:
@@ -123,10 +113,8 @@ redisson:
     password: ${REDIS_PASSWORD:}
     connection-pool-size: 16
     connection-minimum-idle-size: 4
-    idle-connection-timeout: 10000
-    connect-timeout: 3000
 
-sssm:
+xsocial:
   rate-limit:
     enabled: true
     default-capacity: 100
@@ -134,71 +122,45 @@ sssm:
     default-refill-period: 1m
 ```
 
-### Beans auto-configured
+### @Bean (not expressible in YAML)
 
 ```java
-@Bean ReactiveRedisTemplate<String, Object> reactiveRedisTemplate()
-@Bean RedissonClient redissonClient()
-@Bean RedisCacheManager cacheManager()
-@Bean RateLimiterService rateLimiterService()    // Bucket4j + Redisson
+// RedissonClient is not provided by Spring Boot auto-configuration.
+@Bean
+RedissonClient redissonClient(RedissonProperties props) {
+    return Redisson.create(Config.fromYAML(props.toYaml()));
+}
+
+// RateLimiterService wraps Bucket4j + Redisson — no Spring equivalent.
+@Bean
+RateLimiterService rateLimiterService(RedissonClient client, RateLimitProperties props) {
+    return new RateLimiterServiceImpl(client, props);
+}
 ```
 
-### Cách dùng caching
+### Usage
 
 ```java
-// Annotation-based (ưu tiên)
+// @Cacheable / @CacheEvict — zero extra config
 @Cacheable(value = "user:profile", key = "#userId")
 public Mono<UserResponse> findById(String userId) { ... }
 
-@CacheEvict(value = "user:profile", key = "#userId")
-public Mono<UserResponse> updateProfile(String userId, ...) { ... }
-
-@CachePut(value = "user:profile", key = "#result.id()")
-public Mono<UserResponse> createUser(CreateUserRequest req) { ... }
-```
-
-### Cách dùng distributed lock
-
-```java
-@Autowired RedissonClient redissonClient;
-
+// Distributed lock via Redisson
 RLock lock = redissonClient.getLock("lock:follow:" + userId + ":" + targetId);
-Mono.fromCallable(() -> lock.tryLock(500, 5000, TimeUnit.MILLISECONDS))
-    .flatMap(acquired -> acquired
-        ? performFollow().doFinally(s -> lock.unlock())
-        : Mono.error(new ConflictException("OPERATION_IN_PROGRESS")));
-```
-
-### Cách dùng rate limiter
-
-```java
-@WebFilter
-@RequiredArgsConstructor
-public class RateLimitFilter implements WebFilter {
-    private final RateLimiterService rateLimiterService;
-
-    @Override
-    public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-        String key = resolveKey(exchange);  // userId hoặc IP
-        String endpoint = exchange.getRequest().getPath().value();
-        
-        return rateLimiterService.tryConsume(key, endpoint)
-            .flatMap(allowed -> allowed
-                ? chain.filter(exchange)
-                : buildRateLimitResponse(exchange));
-    }
-}
+Mono.fromCallable(() -> lock.tryLock(500, 5000, MILLISECONDS))
+    .flatMap(ok -> ok ? doFollow().doFinally(s -> lock.unlock())
+                      : Mono.error(new ConflictException("OPERATION_IN_PROGRESS")));
 ```
 
 ---
 
 ## kafka-starter
 
-**Path:** `spring-services/starters/kafka-starter`  
-**Cung cấp:** ReactiveKafkaProducerTemplate · DLT config · retry policy  
-**Dùng bởi:** Tất cả services có Kafka integration  
+**Path:** `starters/kafka-starter`  
+**Used by:** All services with Kafka integration  
+**Spring auto-config leveraged:** `KafkaAutoConfiguration`
 
-### application.yaml
+### application.yaml (consuming service)
 
 ```yaml
 spring:
@@ -220,13 +182,13 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: "com.sssm.*"
+        spring.json.trusted.packages: "com.xsocial.*"
         isolation.level: read_committed
     listener:
       ack-mode: MANUAL_IMMEDIATE
       concurrency: 3
 
-sssm:
+xsocial:
   kafka:
     retry:
       max-attempts: 3
@@ -237,68 +199,43 @@ sssm:
       suffix: .DLT
 ```
 
-### Event Envelope
+### @Bean (not expressible in YAML)
 
 ```java
-// Tất cả Kafka events phải wrap trong KafkaEventEnvelope
+// ReactiveKafkaProducerTemplate is not auto-configured by Spring Boot.
+@Bean
+ReactiveKafkaProducerTemplate<String, Object> reactiveKafkaProducerTemplate(
+        KafkaProperties props) {
+    return new ReactiveKafkaProducerTemplate<>(
+        SenderOptions.create(props.buildProducerProperties()));
+}
+```
+
+### Standard event envelope
+
+```java
 public record KafkaEventEnvelope<T>(
-    String eventId,           // ULID
-    String eventType,         // "post.created"
-    String version,           // "1"
+    String  eventId,          // ULID
+    String  eventType,        // "post.created"
+    String  version,          // "1"
     Instant timestamp,
-    String producerService,
-    String correlationId,
-    T payload
+    String  producerService,
+    String  correlationId,
+    T       payload
 ) {}
-```
-
-### Cách dùng producer
-
-```java
-@Service
-@RequiredArgsConstructor
-public class PostEventPublisher {
-    private final ReactiveKafkaProducerTemplate<String, Object> kafkaTemplate;
-
-    public Mono<Void> publishPostCreated(Post post) {
-        var event = KafkaEventEnvelope.of("post.created", "1", PostCreatedPayload.from(post));
-        return kafkaTemplate
-            .send("post.created", post.getId().toString(), event)
-            .doOnSuccess(r -> log.info("Published post.created: {}", post.getId()))
-            .doOnError(e -> log.error("Failed to publish post.created", e))
-            .then();
-    }
-}
-```
-
-### Cách dùng consumer
-
-```java
-@Component
-@RequiredArgsConstructor
-public class PostEventConsumer {
-    private final ReactiveKafkaConsumerTemplate<String, KafkaEventEnvelope<PostCreatedPayload>> consumer;
-
-    @PostConstruct
-    public void startConsuming() {
-        consumer.receiveAutoAck()
-            .doOnNext(record -> log.info("Received: {}", record.key()))
-            .flatMap(record -> processEvent(record.value())
-                .doOnError(e -> log.error("Error processing: {}", record.key(), e)))
-            .subscribe();
-    }
-}
 ```
 
 ---
 
 ## elasticsearch-starter
 
-**Path:** `spring-services/starters/elasticsearch-starter`  
-**Cung cấp:** ReactiveElasticsearchClient · index lifecycle utilities  
-**Dùng bởi:** search-service  
+**Path:** `starters/elasticsearch-starter`  
+**Used by:** search-service  
+**Spring auto-config leveraged:** `ElasticsearchRestClientAutoConfiguration`, `ReactiveElasticsearchRepositoriesAutoConfiguration`
 
-### application.yaml
+> Index mappings are **not** created here. A K8S `Job` calls the ES REST API before the Pod starts.
+
+### application.yaml (consuming service)
 
 ```yaml
 spring:
@@ -310,22 +247,25 @@ spring:
     socket-timeout: 30s
 ```
 
-### Beans auto-configured
+### @Bean (not expressible in YAML)
 
 ```java
-@Bean ReactiveElasticsearchClient reactiveElasticsearchClient()
-@Bean ElasticsearchIndexManager indexManager()    // tiện ích create/delete/alias
+// Alias rotation and bulk-flush helpers — no Spring equivalent.
+@Bean
+ElasticsearchIndexManager indexManager(ReactiveElasticsearchClient client) {
+    return new ElasticsearchIndexManager(client);
+}
 ```
 
 ---
 
 ## metrics-starter
 
-**Path:** `spring-services/starters/metrics-starter`  
-**Cung cấp:** Zipkin exporter · Prometheus registry · custom MDC filter · JVM/HTTP/DB metrics  
-**Dùng bởi:** Tất cả services  
+**Path:** `starters/metrics-starter`  
+**Used by:** All services  
+**Spring auto-config leveraged:** `MetricsAutoConfiguration`, `TracingAutoConfiguration`, `ZipkinAutoConfiguration`, `PrometheusAutoConfiguration`
 
-### application.yaml
+### application.yaml (consuming service)
 
 ```yaml
 management:
@@ -333,23 +273,20 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
-      base-path: /actuator
   endpoint:
     health:
       probes:
         enabled: true
       show-details: when_authorized
-      show-components: when_authorized
   tracing:
     sampling:
-      probability: ${TRACING_SAMPLE_RATE:0.1}   # 10% prod, 100% dev
+      probability: ${TRACING_SAMPLE_RATE:0.1}
   zipkin:
     tracing:
-      endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
+      endpoint: ${ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
   metrics:
     tags:
       service: ${spring.application.name}
-      env: ${SPRING_PROFILES_ACTIVE:dev}
     distribution:
       percentiles-histogram:
         http.server.requests: true
@@ -359,62 +296,57 @@ management:
 logging:
   pattern:
     console: >-
-      {"timestamp":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}","level":"%level",
-       "service":"${spring.application.name}","traceId":"%X{traceId}",
-       "spanId":"%X{spanId}","userId":"%X{userId}","message":"%msg"}%n
+      {"ts":"%d{yyyy-MM-dd'T'HH:mm:ss.SSSZ}","lvl":"%level",
+       "svc":"${spring.application.name}","traceId":"%X{traceId}",
+       "spanId":"%X{spanId}","userId":"%X{userId}","msg":"%msg"}%n
 ```
 
-### MDC Filter (tự động áp dụng)
+### @Bean (not expressible in YAML)
 
-Mỗi request tự động thêm vào MDC (và log):
-
-```
-traceId    ← từ Zipkin
-spanId     ← từ Zipkin
-userId     ← từ header X-User-Id
-requestId  ← tạo mới (ULID)
+```java
+// Injects traceId / spanId / userId into every log line via MDC.
+// Spring ships no WebFilter for this.
+@Bean
+@Order(-90)
+MdcPropagationWebFilter mdcPropagationWebFilter() {
+    return new MdcPropagationWebFilter();
+}
 ```
 
 ---
 
 ## websocket-starter
 
-**Path:** `spring-services/starters/websocket-starter`  
-**Cung cấp:** WebSocketHandlerAdapter · URL mapping · CORS config  
-**Dùng bởi:** notification-service · private-message-service  
+**Path:** `starters/websocket-starter`  
+**Used by:** notification-service · private-message-service  
+**Spring auto-config leveraged:** `WebFluxAutoConfiguration`
 
-### application.yaml
+### application.yaml (consuming service)
 
 ```yaml
-sssm:
+xsocial:
   websocket:
     allowed-origins: ${WS_ALLOWED_ORIGINS:*}
     heartbeat-interval: 25s
     connection-timeout: 60s
     max-text-message-size: 65536
-    max-binary-message-size: 65536
 ```
 
-### Cách dùng
+### @Bean (not expressible in YAML)
 
 ```java
-@Component
-@RequiredArgsConstructor
-public class NotificationWebSocketHandler implements WebSocketHandler {
-    
-    @Override
-    public Mono<Void> handle(WebSocketSession session) {
-        UserPrincipal user = extractUser(session);
-        
-        return session.send(
-            notificationFlux(user.userId())
-                .map(session::textMessage)
-        ).and(
-            session.receive()
-                .map(WebSocketMessage::getPayloadAsText)
-                .flatMap(msg -> handleClientMessage(user, msg))
-        );
-    }
+// WebSocketHandlerAdapter and handler URL mapping cannot be configured via YAML.
+@Bean WebSocketHandlerAdapter webSocketHandlerAdapter() {
+    return new WebSocketHandlerAdapter();
+}
+
+@Bean
+HandlerMapping wsHandlerMapping(Map<String, WebSocketHandler> handlers,
+                                WebSocketProperties props) {
+    SimpleUrlHandlerMapping m = new SimpleUrlHandlerMapping();
+    m.setUrlMap(handlers);
+    m.setOrder(-1);
+    return m;
 }
 ```
 
@@ -422,60 +354,61 @@ public class NotificationWebSocketHandler implements WebSocketHandler {
 
 ## security-starter
 
-**Path:** `spring-services/starters/security-starter`  
-**Cung cấp:** JWT claim extraction filter · UserPrincipal builder · @CurrentUser resolver  
-**Dùng bởi:** Tất cả services  
+**Path:** `starters/security-starter`  
+**Used by:** All services  
+**Purpose:** Extract JWT claims from gateway-forwarded headers. No JWT validation — that is the gateway's job.  
+**Spring auto-config leveraged:** None (no Spring Security auth chain).
 
-### application.yaml
+### application.yaml (consuming service)
 
 ```yaml
-sssm:
+xsocial:
   security:
     user-id-header: X-User-Id
-    roles-header: X-User-Roles
-    ip-header: X-Forwarded-For
+    roles-header:   X-User-Roles
+    ip-header:      X-Forwarded-For
     anonymous-paths:
       - /actuator/**
       - /v3/api-docs/**
-      - /swagger-ui/**
 ```
 
-### Luồng hoạt động
-
-```
-K8S Gateway đã validate JWT → inject headers vào request:
-  X-User-Id:    "01HXZ..."
-  X-User-Roles: "USER,MODERATOR"
-  X-Forwarded-For: "1.2.3.4"
-
-security-starter WebFilter:
-  1. Đọc headers
-  2. Build UserPrincipal record
-  3. Lưu vào Reactor Context
-  4. Lưu vào MDC (cho logging)
-
-Service controller:
-  @GetMapping("/me")
-  Mono<ApiResponse<UserResponse>> getMe(@CurrentUser UserPrincipal user) {
-      // user.userId(), user.roles(), user.ip()
-  }
-  
-  // Hoặc dùng ReactiveContextUtil:
-  return ReactiveContextUtil.getCurrentUserId()
-      .flatMap(userId -> userService.findById(userId));
-```
-
-### Beans auto-configured
+### @Bean (not expressible in YAML)
 
 ```java
-@Bean ClaimExtractionWebFilter claimFilter()       // WebFilter, order = -100
-@Bean CurrentUserArgumentResolver currentUserResolver()
-@Bean UserContextPropagationOperator contextOperator()  // propagate tới @Async
+// Header extraction WebFilter and argument resolver are custom — no Spring equivalent.
+@Bean @Order(-100)
+ClaimExtractionWebFilter claimExtractionWebFilter(SecurityProperties props) {
+    return new ClaimExtractionWebFilter(props);
+}
+
+@Bean
+CurrentUserArgumentResolver currentUserArgumentResolver() {
+    return new CurrentUserArgumentResolver();
+}
+```
+
+### How it works
+
+```
+K8S Gateway validates JWT → injects headers:
+  X-User-Id:       "01HXZ..."
+  X-User-Roles:    "USER,MODERATOR"
+  X-Forwarded-For: "1.2.3.4"
+
+security-starter WebFilter (order -100):
+  1. Reads headers
+  2. Builds UserPrincipal
+  3. Writes into Reactor Context + MDC
+
+Handler:
+  Mono<Response> getMe(@CurrentUser UserPrincipal user) { ... }
+  // or
+  ReactiveContextUtil.getCurrentUserId().flatMap(id -> ...)
 ```
 
 ---
 
-## Tóm tắt dependency theo service
+## Dependency matrix
 
 | Service | postgres | cassandra | redis | kafka | elasticsearch | metrics | websocket | security |
 |---------|:--------:|:---------:|:-----:|:-----:|:-------------:|:-------:|:---------:|:--------:|

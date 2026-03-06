@@ -1,98 +1,88 @@
 # private-message-service
 
-**Type:** Spring Boot  
-**Port:** `8088`  
-**Module path:** `spring-services/services/private-message-service`  
-**Database:** Apache Cassandra (reactive)  
-**Cache:** Redis (Redisson + Pub/Sub)  
-**Messaging:** Kafka  
-**Real-time:** Reactive WebSocket  
+**Type:** Spring Boot · Port `8088`  
+**Primary DB:** Apache Cassandra — keyspace `x_social_messages`  
+**Cache:** Redis (metadata cache + Pub/Sub for cross-pod WS routing)  
+**Starters:** `cassandra-starter` `redis-starter` `kafka-starter` `metrics-starter` `security-starter` `websocket-starter`
 
 ---
 
-## Trách nhiệm
+## Responsibilities
 
-End-to-end private messaging: nhắn tin 1-1 (DM), group chat (tới 500 người), và channel conversation liên kết với social groups. Hỗ trợ media attachments, reactions, message forwarding, read receipts, typing indicators, và per-conversation settings.
-
----
-
-## Loại Conversation
-
-| Type | Số thành viên | Tạo bởi | Ghi chú |
-|------|:------------:|---------|---------|
-| `DIRECT` | 2 | Bất kỳ user | Không thêm được thành viên |
-| `GROUP_CHAT` | 2–500 | Bất kỳ user | Group chat độc lập (không liên kết social group) |
-| `GROUP_CHANNEL` | Không giới hạn* | Auto bởi group-service | Liên kết với social group qua `group_id` |
-
-\* Giới hạn bởi group membership, không bởi bảng participant.
+End-to-end private messaging: 1-on-1 DMs, user-created group chats (up to 500 members), and group-channel conversations linked to social groups. Handles real-time WebSocket delivery, reactions, forwarding, read receipts, typing indicators, per-conversation notification settings, and media attachments.
 
 ---
 
-## Loại Message
+## Conversation types
 
-| `message_type` | Mô tả |
-|----------------|-------|
-| `TEXT` | Văn bản thuần (markdown-lite) |
-| `IMAGE` / `VIDEO` / `AUDIO` / `FILE` | Media đính kèm (qua media-service) |
-| `STICKER` | Sticker ID tham chiếu |
-| `FORWARDED` | Tin nhắn được chuyển tiếp (reference-only, không copy nội dung) |
-| `SYSTEM` | Hệ thống: "UserA đã tham gia", "UserB đã rời nhóm" |
+| Type | Max members | Created by |
+|------|:-----------:|-----------|
+| `DIRECT` | 2 | Either user |
+| `GROUP_CHAT` | 500 | Any user |
+| `GROUP_CHANNEL` | Unlimited* | group-service (auto) |
+
+\* Bounded by group membership.
 
 ---
 
-## Kiến trúc real-time
+## Real-time architecture
 
 ```
-Client A (WebSocket pod-1) ─── gửi message
-         │
-         ▼
-  private-message-service (pod-1):
-    1. Lưu vào Cassandra
-    2. Publish Redis Pub/Sub: channel "conv:{convId}"
-    3. Publish Kafka: message.sent
+Sender (WS pod-1)
+  │ send message
+  ▼
+private-message-service (pod-1):
+  1. Write to Cassandra
+  2. PUBLISH Redis channel "conv:{convId}"   ← cross-pod routing
+  3. Publish Kafka: message.sent             ← offline push
 
-Redis Pub/Sub:
-    ├── Pod-1 nhận → push tới Client A (sender confirmation)
-    ├── Pod-2 nhận → push tới Client B (online trên pod-2)
-    └── Pod-3 nhận → push tới Client C (online trên pod-3)
+Redis Pub/Sub fanout:
+  pod-1 → deliver to sender (confirmation)
+  pod-2 → deliver to recipient B (online)
+  pod-3 → deliver to recipient C (online)
 
-Kafka: message.sent → message-notification-service
-    → Đẩy FCM/APNs/Web Push cho user offline
+Kafka message.sent → message-notification-service → FCM / APNs / Web Push
 ```
 
 ---
 
-## Cassandra Schema (Keyspace: `x_social_messages`)
+## DB init
+
+K8S `InitContainer` runs `cqlsh`.  
+Scripts: `infrastructure/k8s/db-init/private-message-service/cql/`  
+`spring.cassandra.schema-action: NONE`
+
+---
+
+## Schema (keyspace `x_social_messages`)
 
 ```cql
--- Conversation metadata
 CREATE TABLE conversations (
-  conversation_id  UUID        PRIMARY KEY,
-  type             TEXT,
-  name             TEXT,
-  avatar_url       TEXT,
-  group_id         UUID,
-  created_by       UUID,
-  created_at       TIMESTAMP,
-  updated_at       TIMESTAMP,
-  settings         TEXT,       -- JSON global settings
-  is_deleted       BOOLEAN     DEFAULT FALSE
+  conversation_id UUID       PRIMARY KEY,
+  type            TEXT,                      -- DIRECT|GROUP_CHAT|GROUP_CHANNEL
+  name            TEXT,
+  avatar_url      TEXT,
+  group_id        UUID,
+  created_by      UUID,
+  created_at      TIMESTAMP,
+  updated_at      TIMESTAMP,
+  settings        TEXT,                      -- JSON global conversation settings
+  is_deleted      BOOLEAN DEFAULT FALSE
 );
 
--- Participants
 CREATE TABLE conversation_participants (
-  conversation_id          UUID,
-  user_id                  UUID,
-  role                     TEXT DEFAULT 'MEMBER',   -- OWNER|ADMIN|MEMBER
-  status                   TEXT DEFAULT 'ACTIVE',   -- ACTIVE|LEFT|REMOVED|MUTED
-  joined_at                TIMESTAMP,
-  last_read_message_id     UUID,
-  last_read_at             TIMESTAMP,
-  notification_settings    TEXT,                    -- JSON per-conv settings
+  conversation_id       UUID,
+  user_id               UUID,
+  role                  TEXT DEFAULT 'MEMBER',  -- OWNER|ADMIN|MEMBER
+  status                TEXT DEFAULT 'ACTIVE',  -- ACTIVE|LEFT|REMOVED|MUTED
+  joined_at             TIMESTAMP,
+  last_read_message_id  UUID,
+  last_read_at          TIMESTAMP,
+  notification_settings TEXT,                   -- JSON per-conv settings
   PRIMARY KEY (conversation_id, user_id)
 );
 
--- Reverse lookup: conversations của một user
+-- Reverse lookup: all conversations for a user, sorted by latest message
 CREATE TABLE conversations_by_user (
   user_id           UUID,
   last_message_at   TIMESTAMP,
@@ -103,170 +93,125 @@ CREATE TABLE conversations_by_user (
   PRIMARY KEY (user_id, last_message_at, conversation_id)
 ) WITH CLUSTERING ORDER BY (last_message_at DESC, conversation_id ASC);
 
--- Messages
 CREATE TABLE messages (
-  conversation_id              UUID,
-  message_id                   TIMEUUID,
-  sender_id                    UUID,
-  message_type                 TEXT,
-  content                      TEXT,
-  media_ids                    LIST<UUID>,
-  forwarded_from_message_id    UUID,
+  conversation_id                UUID,
+  message_id                     TIMEUUID,
+  sender_id                      UUID,
+  message_type                   TEXT,    -- TEXT|IMAGE|VIDEO|AUDIO|FILE|STICKER|FORWARDED|SYSTEM
+  content                        TEXT,
+  media_ids                      LIST<UUID>,
+  forwarded_from_message_id      UUID,
   forwarded_from_conversation_id UUID,
-  reply_to_message_id          UUID,
-  status                       TEXT,   -- SENT|DELIVERED|READ|FAILED|DELETED
-  is_deleted                   BOOLEAN DEFAULT FALSE,
-  deleted_at                   TIMESTAMP,
-  deleted_by                   UUID,
-  edited_at                    TIMESTAMP,
-  metadata                     TEXT,   -- JSON: {fileName, fileSize, duration}
-  created_at                   TIMESTAMP,
+  reply_to_message_id            UUID,
+  status                         TEXT,    -- SENT|DELIVERED|READ|FAILED|DELETED
+  is_deleted                     BOOLEAN DEFAULT FALSE,
+  deleted_at                     TIMESTAMP,
+  deleted_by                     UUID,
+  edited_at                      TIMESTAMP,
+  metadata                       TEXT,    -- JSON: {fileName, fileSize, duration}
+  created_at                     TIMESTAMP,
   PRIMARY KEY (conversation_id, message_id)
 ) WITH CLUSTERING ORDER BY (message_id DESC);
 
--- Reactions
 CREATE TABLE message_reactions (
-  conversation_id  UUID,
-  message_id       TIMEUUID,
-  user_id          UUID,
-  emoji            TEXT,
-  reacted_at       TIMESTAMP,
+  conversation_id UUID,
+  message_id      TIMEUUID,
+  user_id         UUID,
+  emoji           TEXT,
+  reacted_at      TIMESTAMP,
   PRIMARY KEY (conversation_id, message_id, user_id)
 );
 
--- Read receipts
 CREATE TABLE message_read_receipts (
-  conversation_id  UUID,
-  message_id       TIMEUUID,
-  user_id          UUID,
-  read_at          TIMESTAMP,
+  conversation_id UUID,
+  message_id      TIMEUUID,
+  user_id         UUID,
+  read_at         TIMESTAMP,
   PRIMARY KEY (conversation_id, message_id, user_id)
 );
 ```
 
 ---
 
-## WebSocket Protocol
+## Business rules
 
-```
-Connect:  WS /ws/messages
-  Headers: X-User-Id (từ gateway)
-
-CLIENT → SERVER:
-  { "type": "JOIN_CONVERSATION",  "conversationId": "..." }
-  { "type": "LEAVE_CONVERSATION", "conversationId": "..." }
-  { "type": "TYPING_START",       "conversationId": "..." }
-  { "type": "TYPING_STOP",        "conversationId": "..." }
-  { "type": "PING" }
-
-SERVER → CLIENT:
-  { "type": "NEW_MESSAGE",        "conversationId": "...", "message": {...} }
-  { "type": "MESSAGE_UPDATED",    "conversationId": "...", "messageId": "...", "content": "..." }
-  { "type": "MESSAGE_DELETED",    "conversationId": "...", "messageId": "..." }
-  { "type": "MESSAGE_REACTION",   "conversationId": "...", "messageId": "...",
-                                  "emoji": "👍", "userId": "...", "action": "ADD|REMOVE" }
-  { "type": "READ_RECEIPT",       "conversationId": "...", "userId": "...",
-                                  "lastReadMessageId": "..." }
-  { "type": "TYPING_INDICATOR",   "conversationId": "...", "userId": "...", "typing": true }
-  { "type": "PARTICIPANT_JOINED", "conversationId": "...", "userId": "..." }
-  { "type": "PARTICIPANT_LEFT",   "conversationId": "...", "userId": "..." }
-  { "type": "PONG" }
-```
+| Rule | Detail |
+|------|--------|
+| Reaction | 1 per user per message (PUT semantics). Changing emoji overwrites. Physical delete allowed (not user-generated content). |
+| Forward | Creates new `FORWARDED` message in target conv. Original is NOT copied — reference only. If source deleted → show `[Message unavailable]`. |
+| Edit | `TEXT` type only, within 15 min of send, sender only. Overwrites content, sets `edited_at`. |
+| Soft delete | `is_deleted=true`, content replaced by `[Message deleted]` in responses. |
+| Read receipt privacy | If `user.settings.readReceipts=false` → Cassandra still updated, but `READ_RECEIPT` WS event NOT broadcast. |
 
 ---
 
-## Business Rules quan trọng
-
-### Reaction
-- 1 reaction per user per message (PUT semantics: thay đổi emoji = ghi đè).
-- Reactions **không** soft delete — được physical delete (không phải user-uploaded content).
-- Response trả về aggregate: `[{ emoji: "👍", count: 5, users: [...] }]`.
-
-### Forward
-- Tạo message mới với `type=FORWARDED`, `forwarded_from_message_id` = ID gốc.
-- Nội dung gốc **không** bị copy — chỉ reference.
-- Nếu message gốc bị xóa → hiển thị `[Tin nhắn không còn tồn tại]`.
-
-### Edit
-- Chỉ `message_type=TEXT`, trong vòng **15 phút** sau khi gửi.
-- Chỉ sender mới được edit.
-- `edited_at` được cập nhật; lịch sử edit không lưu (overwrite).
-
-### Soft Delete
-- Message content được thay bằng `[Tin nhắn đã bị xóa]` trong response.
-- `is_deleted = true`, `content = null` trong Cassandra.
-
-### Read Receipt Privacy
-- Nếu `user.settings.readReceipts = false`: UPDATE vẫn lưu nội bộ nhưng **không** broadcast `READ_RECEIPT` WS event ra ngoài.
-
----
-
-## Per-Conversation Settings
+## Per-conversation settings (JSON in `notification_settings` column)
 
 ```json
 {
-  "muteUntil": "2026-06-01T00:00:00Z",
-  "mutedForever": false,
-  "notifyOn": "ALL_MESSAGES",
-  "theme": "BLUE",
-  "nickname": "Bob",
+  "muteUntil":      "2026-06-01T00:00:00Z",
+  "mutedForever":   false,
+  "notifyOn":       "ALL_MESSAGES",
+  "theme":          "BLUE",
+  "nickname":       "Bob",
   "messagePreview": true
 }
 ```
 
-Lưu trong `conversation_participants.notification_settings`.
-
 ---
 
-## User-Level Message Settings
+## WebSocket protocol
 
-```json
-{
-  "allowDmFrom": "FOLLOWING",
-  "readReceipts": true,
-  "typingIndicators": true,
-  "messagePreview": true,
-  "archiveInactiveAfterDays": 30
-}
+```
+Connect: WS /ws/messages
+
+Client → Server:
+  JOIN_CONVERSATION  / LEAVE_CONVERSATION  { conversationId }
+  TYPING_START       / TYPING_STOP         { conversationId }
+  PING
+
+Server → Client:
+  NEW_MESSAGE         { conversationId, message }
+  MESSAGE_UPDATED     { conversationId, messageId, content }
+  MESSAGE_DELETED     { conversationId, messageId }
+  MESSAGE_REACTION    { conversationId, messageId, emoji, userId, action: ADD|REMOVE }
+  READ_RECEIPT        { conversationId, userId, lastReadMessageId }
+  TYPING_INDICATOR    { conversationId, userId, typing: bool }
+  PARTICIPANT_JOINED  { conversationId, userId }
+  PARTICIPANT_LEFT    { conversationId, userId }
+  PONG
 ```
 
-Lưu trong `user-service.notification_settings.message`. Propagate sang cache qua Kafka `user.profile.updated`.
-
 ---
 
-## Starters sử dụng
+## Kafka
 
-`cassandra-starter` · `redis-starter` · `kafka-starter` · `metrics-starter` · `security-starter` · `websocket-starter`
+### Published
 
----
-
-## Kafka Events Published
-
-| Topic | Payload chính | Consumers |
-|-------|--------------|-----------|
-| `message.sent` | convId, msgId, senderId, participants, type, preview | message-notification-svc, user-analysis-svc |
-| `message.delivered` | convId, msgId, recipientId | (sync) |
-| `message.read` | convId, lastReadMessageId, userId | (multi-device) |
-| `message.reaction.added` | convId, msgId, emoji, userId | message-notification-svc |
-| `message.reaction.removed` | convId, msgId, userId | (internal) |
-| `message.deleted` | convId, msgId | (internal) |
-| `conversation.created` | convId, type, participants | notification-svc |
-| `conversation.settings.updated` | convId, userId, settings | message-notification-svc |
-
-## Kafka Events Consumed
-
-| Topic | Hành động |
+| Topic | Consumers |
 |-------|-----------|
+| `message.sent` | message-notification-svc, user-analysis-svc |
+| `message.delivered` | (multi-device sync) |
+| `message.read` | (multi-device sync) |
+| `message.reaction.added` | message-notification-svc |
+| `message.reaction.removed` | (internal) |
+| `message.deleted` | (internal) |
+| `conversation.created` | notification-svc |
+| `conversation.settings.updated` | message-notification-svc |
+
+### Consumed
+
+| Topic | Action |
+|-------|--------|
 | `user.profile.updated` | Invalidate participant name/avatar cache |
-| `group.member.left` | Remove participant khỏi GROUP_CHANNEL conversation |
+| `group.member.left` | Remove from GROUP_CHANNEL participants |
 | `group.deleted` | Archive GROUP_CHANNEL conversation |
 
 ---
 
-## API Endpoints
+## API
 
 ```
-# Conversations
 POST   /api/v1/messages/conversations
 GET    /api/v1/messages/conversations
 GET    /api/v1/messages/conversations/{convId}
@@ -275,13 +220,11 @@ DELETE /api/v1/messages/conversations/{convId}
 POST   /api/v1/messages/conversations/{convId}/mute
 POST   /api/v1/messages/conversations/{convId}/settings
 
-# Participants
 GET    /api/v1/messages/conversations/{convId}/participants
 POST   /api/v1/messages/conversations/{convId}/participants
 DELETE /api/v1/messages/conversations/{convId}/participants/{userId}
 PUT    /api/v1/messages/conversations/{convId}/participants/{userId}/role
 
-# Messages
 POST   /api/v1/messages/conversations/{convId}/messages
 GET    /api/v1/messages/conversations/{convId}/messages
 PUT    /api/v1/messages/conversations/{convId}/messages/{msgId}
@@ -292,39 +235,26 @@ DELETE /api/v1/messages/conversations/{convId}/messages/{msgId}/react
 POST   /api/v1/messages/conversations/{convId}/messages/read
 GET    /api/v1/messages/conversations/{convId}/messages/{msgId}/reactions
 
-# WebSocket
 WS     /ws/messages
 ```
 
 ---
 
-## Cache Keys
+## Cache keys
 
-| Key | TTL | Mô tả |
-|-----|-----|-------|
-| `msg:conv:{convId}` | 5 phút | Conversation metadata |
-| `msg:participants:{convId}` | 5 phút | Participant list + roles |
-| `msg:unread:{userId}:{convId}` | 1 phút | Unread count |
-| `msg:conv-list:{userId}:page:0` | 30 giây | First page of conversations |
-| `msg:settings:user:{userId}` | 5 phút | User-level message settings |
-| `msg:settings:conv:{userId}:{convId}` | 5 phút | Per-conv notification settings |
+| Key | TTL |
+|-----|-----|
+| `msg:conv:{convId}` | 5 min |
+| `msg:participants:{convId}` | 5 min |
+| `msg:unread:{userId}:{convId}` | 1 min |
+| `msg:conv-list:{userId}:page:0` | 30 s |
+| `msg:settings:user:{userId}` | 5 min |
+| `msg:settings:conv:{userId}:{convId}` | 5 min |
 
 ---
 
 ## Tests
 
-### Unit Tests
-- `ConversationServiceTest` — DM creation, duplicate prevention
-- `MessageServiceTest` — send, edit (15min rule), soft delete
-- `ReactionServiceTest` — add, change, remove reaction
-- `ForwardServiceTest` — forward logic, deleted source handling
-
-### Integration Tests (Testcontainers)
-- `MessageRepositoryIT` — Cassandra container
-- `WebSocketDeliveryIT` — Cassandra + Redis Pub/Sub + WS test client
-- `MessageKafkaIT` — Cassandra + Kafka
-
-### Automation Tests
-- `DmFlowAutomationTest` — create DM → send → react → forward → delete
-- `GroupChatAutomationTest` — create group chat → add participants → send → read receipt
-- `ReadReceiptPrivacyTest` — verify read receipt not broadcast when setting=false
+- **Unit:** `ConversationServiceTest`, `MessageServiceTest`, `ReactionServiceTest`, `ForwardServiceTest`
+- **Integration:** Cassandra + Redis + Kafka containers
+- **Automation:** create DM → send → react → forward → delete → read receipt → group chat flow

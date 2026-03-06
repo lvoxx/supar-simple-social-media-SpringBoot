@@ -1,396 +1,308 @@
-# Conventions & Engineering Rules — X Social Platform
+# Conventions & Engineering Rules
 
-## 1. Project Structure Conventions
+---
 
-### Spring Boot Service Layout
+## 1. Project Layout
+
+### Spring Boot service
 
 ```
 <service-name>/
-├── src/
-│   ├── main/
-│   │   ├── java/com/sssm/<service>/
-│   │   │   ├── config/          # Spring @Configuration beans
-│   │   │   ├── domain/
-│   │   │   │   ├── entity/      # R2DBC / Cassandra entities
-│   │   │   │   ├── repository/  # ReactiveCrudRepository
-│   │   │   │   ├── event/       # Domain event POJOs
-│   │   │   │   └── command/     # Axon commands (if applicable)
-│   │   │   ├── application/
-│   │   │   │   ├── service/     # Business logic (interface + impl)
-│   │   │   │   ├── dto/         # Request/Response DTOs
-│   │   │   │   └── mapper/      # DTO ↔ Entity mappers (MapStruct)
-│   │   │   ├── infrastructure/
-│   │   │   │   ├── kafka/       # Producers, consumers, listeners
-│   │   │   │   ├── redis/       # Cache config, Redisson beans
-│   │   │   │   └── external/    # WebClient adapters to other services
-│   │   │   ├── web/
-│   │   │   │   ├── router/      # WebFlux RouterFunction (functional)
-│   │   │   │   ├── handler/     # HandlerFunction implementations
-│   │   │   │   └── filter/      # WebFilter (rate limit, logging)
-│   │   │   └── <ServiceName>Application.java
-│   │   └── resources/
-│   │       ├── application.yaml
-│   │       ├── application-dev.yaml
-│   │       ├── application-prod.yaml
-│   │       └── db/migration/    # Flyway scripts: V1__init.sql
-│   └── test/
-│       ├── java/com/sssm/<service>/
-│       │   ├── unit/
-│       │   ├── integration/
-│       │   └── automation/
-│       └── resources/
-│           └── application-test.yaml
+├── src/main/java/com/xsocial/<service>/
+│   ├── config/              # @Configuration only when YAML is not enough
+│   ├── domain/
+│   │   ├── entity/          # R2DBC / Cassandra entities
+│   │   ├── repository/      # ReactiveCrudRepository interfaces
+│   │   └── event/           # Kafka event POJOs
+│   ├── application/
+│   │   ├── service/         # Business logic (interface + impl)
+│   │   ├── dto/             # Request / Response DTOs
+│   │   └── mapper/          # MapStruct mappers
+│   ├── infrastructure/
+│   │   ├── kafka/           # Producers, consumers
+│   │   └── external/        # WebClient adapters
+│   └── web/
+│       ├── router/          # RouterFunction (functional style)
+│       ├── handler/         # HandlerFunction implementations
+│       └── filter/          # WebFilter
+├── src/main/resources/
+│   ├── application.yaml
+│   ├── application-dev.yaml
+│   └── application-prod.yaml
 ├── Dockerfile
 └── pom.xml
 ```
 
-### FastAPI Service Layout
+### FastAPI service
 
 ```
 <service-name>/
 ├── app/
-│   ├── main.py              # FastAPI app, lifespan, router registration
-│   ├── config.py            # Pydantic Settings from env vars
-│   ├── dependencies.py      # DI: db session, redis, current user
-│   ├── domain/
-│   │   ├── models.py        # SQLAlchemy / Pydantic models
-│   │   └── schemas.py       # Request/response Pydantic schemas
-│   ├── api/
-│   │   └── v1/
-│   │       └── routes/      # APIRouter per resource
-│   ├── services/            # Business logic
+│   ├── main.py
+│   ├── config.py            # Pydantic Settings
+│   ├── dependencies.py
+│   ├── api/v1/routes/
+│   ├── services/
 │   ├── infrastructure/
-│   │   ├── database.py      # asyncpg / motor connection
-│   │   ├── redis.py         # aioredis
-│   │   ├── kafka.py         # aiokafka consumer/producer
-│   │   └── ml/              # Model loaders, inference
+│   │   ├── database.py
+│   │   ├── redis.py
+│   │   ├── kafka.py
+│   │   └── ml/
 │   └── core/
-│       ├── exceptions.py
-│       └── middleware.py    # Logging, tracing, rate limit middleware
 ├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── automation/
 ├── Dockerfile
 └── requirements.txt
 ```
 
 ---
 
-## 2. Naming Conventions
+## 2. Naming
 
-### Java / Spring Boot
-
-| Element         | Convention                          | Example                             |
-| --------------- | ----------------------------------- | ----------------------------------- |
-| Package         | `io.github.lvoxx.<service>.<layer>` | `io.github.lvoxx.user.web.handler`  |
-| Class           | PascalCase                          | `UserProfileHandler`                |
-| Interface       | PascalCase, no prefix               | `UserService` (not `IUserService`)  |
-| Implementation  | `<Interface>Impl`                   | `UserServiceImpl`                   |
-| DTO             | Suffix `Request` / `Response`       | `CreatePostRequest`, `PostResponse` |
-| Kafka topic     | snake_case with dots                | `user.profile.updated`              |
-| Redis key       | colon-delimited                     | `user:profile:{userId}`             |
-| DB table        | snake_case, plural                  | `user_profiles`, `post_likes`       |
-| DB column       | snake_case                          | `created_at`, `is_deleted`          |
-| Environment var | SCREAMING_SNAKE                     | `DB_HOST`, `REDIS_PASSWORD`         |
-
-### Python / FastAPI
-
-| Element         | Convention      | Example                       |
-| --------------- | --------------- | ----------------------------- |
-| Module          | snake_case      | `user_analysis.py`            |
-| Class           | PascalCase      | `UserBehaviorAnalyzer`        |
-| Function/method | snake_case      | `analyze_user_behavior`       |
-| Pydantic model  | PascalCase      | `PostGuardRequest`            |
-| Route path      | kebab-case      | `/api/v1/guard/post-check`    |
-| Env var         | SCREAMING_SNAKE | `MODEL_PATH`, `KAFKA_BROKERS` |
+| Element | Convention | Example |
+|---------|-----------|---------|
+| Java class | PascalCase | `UserProfileHandler` |
+| Java interface | PascalCase, no `I` prefix | `UserService` |
+| Java impl | `<Interface>Impl` | `UserServiceImpl` |
+| DTO | `<Action>Request` / `<Entity>Response` | `CreatePostRequest` |
+| Kafka topic | `domain.entity.action` | `user.profile.updated` |
+| Redis key | `entity:qualifier:{id}` | `user:profile:{userId}` |
+| DB table | `snake_case`, plural | `users`, `post_likes` |
+| DB column | `snake_case` | `created_at`, `is_deleted` |
+| Starter module | `<technology>-starter` | `kafka-starter`, `redis-starter` |
+| Env variable | `SCREAMING_SNAKE_CASE` | `DB_HOST`, `REDIS_PASSWORD` |
+| Python module | `snake_case` | `user_analysis.py` |
+| Python class | PascalCase | `UserBehaviorAnalyzer` |
 
 ---
 
-## 3. API Design Rules
+## 3. Database Rules
 
-### Response Envelope
+### One primary database engine per service
 
-All endpoints return `ApiResponse<T>` from `common-core`:
+Every service owns **one** primary engine: PostgreSQL *or* Cassandra *or* Elasticsearch.  
+Redis is a cache/lock layer — it is **not** counted as a primary store.
 
-```json
-{
-  "success": true,
-  "data": { ... },
-  "error": null,
-  "meta": {
-    "requestId": "01HXZ...",
-    "timestamp": "2026-01-01T00:00:00Z",
-    "version": "v1"
-  }
-}
+If a service naturally requires two engines (e.g. write-store + search-store), **split it into two services**.
+
+```
+❌  post-service  →  PostgreSQL (writes) + Elasticsearch (search)
+
+✅  post-service    →  PostgreSQL   (write model)
+    search-service  →  Elasticsearch (read/search model, synced via Kafka)
 ```
 
-Error response:
+### No foreign-key constraints
 
-```json
-{
-  "success": false,
-  "data": null,
-  "error": {
-    "code": "USER_NOT_FOUND",
-    "message": "User with id '...' does not exist",
-    "details": []
-  },
-  "meta": { ... }
-}
-```
-
-### Pagination (Cursor-based for Cassandra, Offset for PostgreSQL)
-
-```json
-{
-  "data": {
-    "items": [...],
-    "nextCursor": "01HXZ...",
-    "hasMore": true,
-    "total": null
-  }
-}
-```
-
-### Versioning
-
-All APIs are prefixed `/api/v1/`. Breaking changes require new version `/api/v2/`.
-
-### HTTP Status Codes
-
-| Scenario              | Code |
-| --------------------- | ---- |
-| Success GET           | 200  |
-| Created               | 201  |
-| Accepted (async)      | 202  |
-| No Content            | 204  |
-| Bad Request           | 400  |
-| Unauthorized          | 401  |
-| Forbidden             | 403  |
-| Not Found             | 404  |
-| Conflict              | 409  |
-| Unprocessable Entity  | 422  |
-| Too Many Requests     | 429  |
-| Internal Server Error | 500  |
-| Service Unavailable   | 503  |
-
----
-
-## 4. Reactive Programming Rules
-
-**Spring Boot (Project Reactor):**
-
-- **NEVER** call `.block()` in any service/handler/consumer.
-- **NEVER** use `Thread.sleep()` — use `Mono.delay()`.
-- Use `publishOn(Schedulers.boundedElastic())` only for blocking I/O (file I/O, subprocess calls). Always return to reactive scheduler after.
-- Propagate `ReactorContext` (userId, traceId) via `Context` and `contextWrite()`.
-- Error handling: use `.onErrorResume()`, `.onErrorMap()`, never swallow errors silently.
-- Prefer `switchIfEmpty(Mono.error(...))` over null checks.
-
-**FastAPI (asyncio):**
-
-- All route handlers must be `async def`.
-- Never call synchronous blocking code in async context — use `asyncio.to_thread()` if necessary.
-- Use `async with` for database sessions, Redis connections.
-- Background tasks (model inference, Kafka publish) use `BackgroundTasks` or `asyncio.create_task()`.
-
----
-
-## 5. Data Rules
-
-### Soft Delete
-
-Every entity with user-uploaded data MUST have:
+All tables and CQL schemas must be written **without** `REFERENCES` or `FOREIGN KEY` declarations.  
+Referential integrity is enforced exclusively in application code.
 
 ```sql
-is_deleted     BOOLEAN DEFAULT FALSE NOT NULL,
-deleted_at     TIMESTAMPTZ,
-deleted_by     UUID
+-- ❌ WRONG
+follower_id  UUID  REFERENCES users(id),
+
+-- ✅ CORRECT
+follower_id  UUID  NOT NULL,
 ```
 
-All repository queries MUST add `WHERE is_deleted = FALSE` by default.  
-Implement a `SoftDeletableRepository` base interface in `common-core`.
+### Minimal table relations
+
+Avoid joins and relational patterns that lead to N+1 queries.  
+Design tables for the **primary query pattern** of that service:
+
+- Denormalise commonly-read fields (e.g. `author_username` alongside `author_id`).
+- Prefer separate lookup tables to multi-join queries.
+- Cross-service data is fetched via Kafka events (async) or WebClient (sync if required), never via a shared database.
+
+### Database initialisation — K8S only
+
+Services **never** create or migrate schemas at startup.  
+All DDL / CQL / ES mappings are applied by K8S resources that run **before** the service Pod starts.
+
+| Engine | K8S type | Tool | Config key to set |
+|--------|---------|------|-------------------|
+| PostgreSQL | `Job` | `flyway/flyway:10` CLI | *(no flyway config in app yaml)* |
+| Cassandra | `InitContainer` | `cqlsh` | `spring.cassandra.schema-action: NONE` |
+| Elasticsearch | `Job` | `curl` REST calls | *(no ES schema config in app yaml)* |
+
+Scripts live in `infrastructure/k8s/db-init/<service>/`.
+
+### Soft delete
+
+Every user-generated entity must include:
+
+```sql
+is_deleted  BOOLEAN     NOT NULL DEFAULT FALSE,
+deleted_at  TIMESTAMPTZ,
+deleted_by  UUID
+```
+
+All repository queries default to `WHERE is_deleted = FALSE`.
 
 ### Auditing
 
-Every entity MUST extend `AuditableEntity`:
+Every entity must include:
 
-```java
-created_at   TIMESTAMPTZ DEFAULT NOW() NOT NULL
-updated_at   TIMESTAMPTZ
-created_by   UUID   -- keycloakUserId
-updated_by   UUID
+```sql
+created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+updated_at  TIMESTAMPTZ,
+created_by  UUID,
+updated_by  UUID
 ```
 
-Automatically populated via R2DBC `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy` with `ReactiveAuditorAware`.
+Populated automatically via Spring Data `@CreatedDate`, `@LastModifiedDate`, `@CreatedBy`, `@LastModifiedBy`.
 
 ### IDs
 
-- Use **ULID** (Universally Unique Lexicographically Sortable Identifier) for all primary keys: time-sortable, UUID-compatible, no hotspot risk.
-- Store as `UUID` in PostgreSQL, `TEXT` in Cassandra.
-- Generate via `UlidGenerator` from `common-core`.
+Use **ULID** for all primary keys — time-sortable, UUID-compatible.  
+Generated by `UlidGenerator` from `common-core`. Stored as `UUID` in PostgreSQL and Cassandra.
 
 ---
 
-## 6. Testing Standards
+## 4. Configuration Rules
 
-### Coverage Requirements
+### YAML over @Bean
 
-| Type              | Minimum                                      |
-| ----------------- | -------------------------------------------- |
-| Unit tests        | 80% line coverage                            |
-| Integration tests | All repository methods, all Kafka consumers  |
-| Automation tests  | All API endpoints (happy path + error cases) |
+Prefer Spring Boot YAML auto-configuration over explicit `@Bean` methods.
 
-### Testcontainers Setup
-
-Each service's `BaseIntegrationTest`:
+```yaml
+# ✅ Use YAML for anything Spring Boot auto-configures
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+```
 
 ```java
-@Testcontainers
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-@ActiveProfiles("test")
-public abstract class BaseIntegrationTest {
-    @Container static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
-    @Container static GenericContainer<?> redis = new GenericContainer<>("redis:7");
-    @Container static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka:7.6"));
-    // ... dynamic property sources
+// ❌ Do NOT replicate what YAML already handles
+@Bean
+public ReactiveRedisConnectionFactory factory() {
+    return new LettuceConnectionFactory(host, port);
 }
 ```
 
-### Test Naming
+Write `@Bean` only when:
 
-```java
-// Format: methodName_givenCondition_expectedBehavior
-@Test void createPost_givenValidRequest_returnsCreatedPost() { ... }
-@Test void createPost_givenContentTooLong_returns422() { ... }
-@Test void createPost_givenBannedContent_returnsRejected() { ... }
+- The type is not provided by Spring Boot auto-configuration (e.g. `RedissonClient`).
+- Custom initialisation logic is required.
+- Conditional wiring (`@ConditionalOn*`) is needed.
+
+### Configuration hierarchy
+
 ```
+Priority (high → low):
+  K8S env vars (ConfigMap / Secret)
+  application-{profile}.yaml
+  application.yaml defaults
+  Starter auto-configuration defaults
+```
+
+Profiles: `dev` · `test` · `staging` · `prod`  
+Secrets (passwords, API keys) are injected via Kubernetes Secrets — never committed to source.
 
 ---
 
-## 7. Logging Standards
+## 5. Reactive Rules
 
-### Log Format (JSON)
+### Spring Boot
 
-Every log entry must include:
+- Never call `.block()` in the hot path.
+- Never use `Thread.sleep()` — use `Mono.delay()`.
+- Use `Schedulers.boundedElastic()` only for blocking I/O (file processing). Return to the reactive scheduler immediately.
+- Propagate Reactor `Context` for `userId` and `traceId`.
+- Use `switchIfEmpty(Mono.error(...))` instead of null checks.
 
-```json
-{
-  "timestamp": "2026-01-01T00:00:00.000Z",
-  "level": "INFO",
-  "service": "user-service",
-  "traceId": "...",
-  "spanId": "...",
-  "userId": "...",
-  "requestId": "...",
-  "message": "...",
-  "context": {}
-}
-```
+### FastAPI
 
-### Log Levels
-
-| Level | When to use                                                   |
-| ----- | ------------------------------------------------------------- |
-| DEBUG | Internal state, cache hits/misses, query params               |
-| INFO  | Request received, response sent, Kafka event published        |
-| WARN  | Retried operation succeeded, degraded mode activated          |
-| ERROR | Exception caught, external service failed, data inconsistency |
-
-Never log: passwords, tokens, PII in plain text.
+- All route handlers are `async def`.
+- Never call synchronous blocking code from async context — use `asyncio.to_thread()`.
+- Use `async with` for DB and Redis sessions.
 
 ---
 
-## 8. Kafka Event Schema
+## 6. API Design
 
-All Kafka events must follow this envelope:
+### Response envelope
+
+```json
+{ "success": true,  "data": { ... }, "error": null,  "meta": { "requestId": "...", "timestamp": "..." } }
+{ "success": false, "data": null,    "error": { "code": "USER_NOT_FOUND", "message": "..." }, "meta": { ... } }
+```
+
+### Pagination — `PageResponse<T>`
+
+```json
+{ "items": [...], "nextCursor": "01HXZ...", "hasMore": true, "total": null }
+```
+
+`total` is `null` for Cassandra (no cheap `COUNT`).
+
+### HTTP status codes
+
+| 200 | 201 | 202 | 204 | 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500 |
+|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|-----|
+| OK | Created | Accepted | No content | Bad request | Unauthenticated | Forbidden | Not found | Conflict | Unprocessable | Rate limited | Error |
+
+---
+
+## 7. Testing Standards
+
+| Type | Minimum coverage | Scope |
+|------|-----------------|-------|
+| Unit | 80 % line | All I/O mocked |
+| Integration | All repository methods + Kafka consumers | Testcontainers real Docker |
+| Automation | All endpoints (happy + error) | WebTestClient / httpx |
+
+Test naming: `methodName_givenCondition_expectedResult`
+
+---
+
+## 8. Logging
+
+Every entry includes: `timestamp`, `level`, `service`, `traceId`, `spanId`, `userId`, `requestId`, `message`.
+
+| Level | When |
+|-------|------|
+| DEBUG | Cache hits, internal state |
+| INFO | Request received, Kafka published |
+| WARN | Retry succeeded |
+| ERROR | Exception caught, external failure |
+
+---
+
+## 9. Kafka event schema
 
 ```json
 {
-  "eventId": "01HXZ...",
-  "eventType": "post.created",
-  "version": "1",
-  "timestamp": "2026-01-01T00:00:00Z",
+  "eventId":         "01HXZ...",
+  "eventType":       "post.created",
+  "version":         "1",
+  "timestamp":       "2026-01-01T00:00:00Z",
   "producerService": "post-service",
-  "correlationId": "...",
-  "payload": { ... }
+  "correlationId":   "...",
+  "payload":         { }
 }
 ```
 
-- Events are **versioned** (`version` field, Axon `@Revision`).
-- Breaking schema changes require a new event type (e.g., `post.created.v2`).
-- Each consumer group has its own DLT: `<topic>.DLT`.
+Breaking schema changes → new event type suffix: `post.created.v2`.  
+Each consumer group has a Dead Letter Topic: `<topic>.DLT`.
 
 ---
 
-## 9. Git Workflow
+## 10. Git Workflow
 
 ```
-main         — production-ready, protected, requires PR + 2 reviews
-develop      — integration branch, all features merge here first
-feature/*    — feature branches from develop
-bugfix/*     — bug fix branches
-hotfix/*     — emergency fixes from main
-release/*    — release preparation branches
+main       — production-ready, protected, 2 reviews required
+develop    — integration branch
+feature/*  — from develop
+bugfix/*   — from develop
+hotfix/*   — from main
 ```
 
-**Commit message format (Conventional Commits):**
+Commit format (Conventional Commits):
 
 ```
 feat(post-service): add bookmark endpoint
-fix(user-service): correct follower count decrement on unfollow
-chore(kafka-starter): upgrade kafka client to 3.7
-test(comment-service): add testcontainer integration tests
-docs(architecture): update kafka topic list
+fix(user-service): correct follower count on unfollow
+chore(kafka-starter): upgrade kafka-clients to 3.7
 ```
-
-**PR Rules:**
-
-- No direct pushes to `main` or `develop`.
-- All PRs require passing Jenkins CI (unit + integration tests).
-- SonarQube quality gate must pass.
-- At least 1 approval required for `develop`, 2 for `main`.
-
----
-
-## 10. Configuration Hierarchy
-
-```
-Priority (highest to lowest):
-1. Environment variables (K8S ConfigMap / Secret)
-2. application-{profile}.yaml
-3. application.yaml (defaults)
-4. Starter auto-configuration defaults
-
-Profiles:
-  dev      — local development, all infra via Docker Compose
-  test     — Testcontainers, in-memory where possible
-  staging  — K8S staging cluster, reduced replicas
-  prod     — K8S production cluster, full HA
-```
-
-**Secret management:** All credentials (`DB_PASSWORD`, `REDIS_PASSWORD`, `KAFKA_SASL_PASSWORD`) are injected via K8S Secrets referenced in Helm `values.yaml`. Never hardcode secrets in code or commit them to git.
-
----
-
-## 11. OpenAPI Documentation Rules
-
-Every endpoint must have:
-
-```java
-@Operation(
-    summary = "Create a new post",
-    description = "Publishes a new post after content moderation and media processing.",
-    security = @SecurityRequirement(name = "bearerAuth")
-)
-@ApiResponse(responseCode = "201", description = "Post created successfully")
-@ApiResponse(responseCode = "202", description = "Post accepted, pending media processing")
-@ApiResponse(responseCode = "422", description = "Content rejected by moderation")
-@ApiResponse(responseCode = "429", description = "Rate limit exceeded")
-```
-
-OpenAPI spec auto-generated and available at `/v3/api-docs` (JSON) and `/v3/api-docs.yaml` (YAML).  
-Swagger UI available in `dev`/`staging` profiles only (disabled in `prod`).
