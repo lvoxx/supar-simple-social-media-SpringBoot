@@ -1,84 +1,228 @@
 # post-guard-service
 
 **Type:** FastAPI · Port `8090`  
-**Primary DB:** PostgreSQL (asyncpg) — schema `x_social_post_guard`  
-**Vector store:** ChromaDB (AI context only — not the primary store)  
-**Starters:** *(FastAPI — no Spring starters)*
+**Language:** Python 3.12
 
 ---
 
-## Responsibilities
+## AI-native storage architecture
 
-Pre-publish content moderation. Classifies post content as `APPROVED`, `FLAGGED`, or `REJECTED` using a fine-tuned BERT model augmented with RAG over known violations stored in ChromaDB.
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Operational store | **PostgreSQL** (asyncpg) | Moderation results, human-review labels, training job metadata |
+| Vector store | **Qdrant** | RAG — HNSW index of known violation embeddings for similarity retrieval |
+| Semantic cache | **Redis Stack + RedisVL** (`langcache-embed-v1`) | Embedding-based cache — avoids re-running model on semantically identical inputs |
+| Experiment tracking | **MLflow** (PostgreSQL backend + MinIO artifacts) | Experiment runs, metric comparison, training lineage |
+| Model registry | **MLflow Model Registry** | Version control, stage promotion (`Development → Staging → Production → Archived`) |
+| Artifact store | **MinIO** | BERT checkpoints, ONNX exports, training datasets |
+
+### Why these choices
+
+**Qdrant** is a Rust-native vector engine with HNSW + gRPC keeping p99 latency under 10 ms at millions of vectors. Its JSON payload filters allow querying by `category`, `severity`, and `recency` in a single round-trip — essential for dynamic RAG context assembly during inline moderation.
+
+**Redis Stack + RedisVL semantic cache** goes beyond exact-match caching: it embeds each input with `langcache-embed-v1` (a cache-optimised fine-tuned sentence-transformer) and computes cosine distance. If distance ≤ threshold, the cached decision is returned in milliseconds — BERT never runs. This is especially effective for spam/phishing where variants of the same template are submitted repeatedly.
+
+**MLflow** is the standard open-source experiment ledger. Its Model Registry provides named model versioning, stage transitions, and a UI for comparing runs — all self-hosted with no cloud vendor lock-in. MinIO provides the S3-compatible artifact backend.
 
 ---
 
-## DB init
+## DB init (K8S only)
 
-A K8S `Job` runs `psql` to apply SQL scripts before the Pod starts.  
-Scripts: `infrastructure/k8s/db-init/post-guard-service/sql/`  
-The service has no Alembic or schema-creation config.
+| Engine | K8S resource | Tool | What it does |
+|--------|-------------|------|-------------|
+| PostgreSQL | `Job` | `psql` | Create schema, tables |
+| Qdrant | `Job` | Qdrant REST API (`curl`) | Create `post_violations` collection, set HNSW config |
+| MLflow | `Job` | `mlflow db upgrade` | Initialise MLflow tracking schema in PostgreSQL |
+| MinIO | `Job` | `mc` (MinIO CLI) | Create `mlflow-artifacts` bucket |
+
+Scripts: `infrastructure/k8s/db-init/post-guard-service/`
 
 ---
 
-## Schema
+## PostgreSQL schema
 
 ```sql
--- moderation_results  (audit + training data)
-id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-post_id         UUID        NOT NULL
-content         TEXT        NOT NULL
-decision        VARCHAR(20) NOT NULL    -- APPROVED|FLAGGED|REJECTED
-categories      TEXT[]
-confidence      FLOAT
-model_version   VARCHAR(50)
-human_reviewed  BOOLEAN     NOT NULL DEFAULT FALSE
-human_decision  VARCHAR(20)
-human_reviewer  UUID
-reviewed_at     TIMESTAMPTZ
-created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
--- model_versions
+-- moderation_results  (audit log + human-review training data)
 id               UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-version_name     VARCHAR(50) UNIQUE NOT NULL
-accuracy         FLOAT
-f1_score         FLOAT
-trained_at       TIMESTAMPTZ
-training_samples INT
-is_active        BOOLEAN     NOT NULL DEFAULT FALSE
+post_id          UUID        NOT NULL
+content          TEXT        NOT NULL
+content_hash     TEXT        NOT NULL       -- SHA-256 for exact-match dedup
+qdrant_point_id  TEXT                       -- reference to Qdrant point
+decision         VARCHAR(20) NOT NULL       -- APPROVED | FLAGGED | REJECTED
+categories       TEXT[]
+confidence       FLOAT       NOT NULL
+model_version    VARCHAR(60) NOT NULL
+human_reviewed   BOOLEAN     NOT NULL DEFAULT FALSE
+human_decision   VARCHAR(20)
+human_reviewer   UUID
+reviewed_at      TIMESTAMPTZ
 created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 ```
 
 ---
 
-## Decision thresholds
+## Qdrant collection: `post_violations`
 
-| Confidence | Decision | post-service action |
-|-----------|----------|---------------------|
-| ≥ 0.90 | `APPROVED` | Publish normally |
-| 0.70–0.89 | `FLAGGED` | Save with `status=PENDING_REVIEW` |
-| < 0.70 | `REJECTED` | Return 422 to client |
+```python
+from qdrant_client.models import VectorParams, Distance, HnswConfigDiff
+
+client.create_collection(
+    collection_name="post_violations",
+    vectors_config=VectorParams(size=384, distance=Distance.COSINE),
+    hnsw_config=HnswConfigDiff(m=16, ef_construct=200)
+)
+
+# Each point payload:
+# { content_snippet, decision, categories, confidence,
+#   model_version, created_at }
+```
 
 ---
 
-## Model pipeline
+## Semantic cache (RedisVL)
+
+```python
+from redisvl.extensions.llmcache import SemanticCache
+from redisvl.utils.vectorize import HFTextVectorizer
+
+cache = SemanticCache(
+    name="post_guard",
+    redis_url=settings.redis_url,
+    vectorizer=HFTextVectorizer("sentence-transformers/langcache-embed-v1"),
+    distance_threshold=0.10,   # tight threshold — moderation must not over-generalise
+    ttl=3600                   # 1 h — spam patterns shift daily
+)
+
+async def check_or_run(content: str) -> GuardResult:
+    hit = await cache.acheck(content)
+    if hit:
+        metrics.cache_hits.inc()
+        return GuardResult(**hit[0]["metadata"])
+
+    result = await run_pipeline(content)
+    await cache.astore(content, result.model_dump())
+    metrics.cache_misses.inc()
+    return result
+
+# On human review override — invalidate stale cache entry
+async def invalidate(content: str):
+    await cache.adelete(content)
+```
+
+---
+
+## Inference pipeline
 
 ```
 Input text
-  → sentence-transformers embedding
-  → ChromaDB top-5 similar known violations (with labels)
-  → BERT fine-tuned classifier + RAG context
-  → { decision, categories, confidence, modelVersion }
+  ↓
+[1] Redis semantic cache lookup
+    HIT  → return cached decision (< 5 ms)
+    MISS ↓
+
+[2] sentence-transformers/all-MiniLM-L6-v2  (384-dim embedding)
+
+[3] Qdrant ANN search — post_violations collection
+    top-5 similar known violations (payload: decision, categories)
+    filter: { created_at: { gte: "90 days ago" } }
+
+[4] BERT fine-tuned classifier
+    input: content + RAG context from step 3
+    output: { decision, categories, confidence }
+
+[5] Cache store (RedisVL)
+[6] Persist to PostgreSQL
+[7] Return response
 ```
 
-**Daily model refresh (02:00 UTC, APScheduler):**
+---
+
+## MLflow experiment tracking
+
+```python
+import mlflow
+
+with mlflow.start_run(experiment_id=EXPERIMENT_ID, run_name=f"bert_guard_{date}"):
+    mlflow.log_params({
+        "base_model":       "bert-base-uncased",
+        "learning_rate":    2e-5,
+        "epochs":           3,
+        "batch_size":       32,
+        "train_samples":    len(train_data),
+        "embedding_model":  "all-MiniLM-L6-v2"
+    })
+    mlflow.log_metrics({
+        "accuracy":                 accuracy,
+        "f1_macro":                 f1_macro,
+        "precision":                precision,
+        "recall":                   recall,
+        "inference_latency_p99_ms": latency_p99
+    })
+    mlflow.pytorch.log_model(
+        model,
+        artifact_path="bert_guard",
+        registered_model_name="post-guard-bert"
+    )
 ```
-1. Query new human-reviewed rows from moderation_results
-2. Fine-tune BERT (1–3 epochs)
-3. If accuracy improved → swap active model
-4. Update ChromaDB with new embeddings
-5. Publish Kafka: ai.model.updated
+
+---
+
+## Model lifecycle (daily, 02:00 UTC — APScheduler)
+
 ```
+1. Query moderation_results WHERE human_reviewed=true AND created_at > last_trained_at
+2. Fine-tune BERT (3 epochs), log run to MLflow Tracking
+3. If new f1_macro > current Production model:
+     mlflow.transition_model_version_stage → "Staging"
+4. Run validation suite on held-out labelled set
+5. If validation passes:
+     transition → "Production"
+     old version → "Archived"
+6. Reload model in-process (no service restart)
+7. Publish Kafka: ai.model.updated { model, version, accuracy, f1 }
+8. Incremental Qdrant upsert: embed new training samples → add points
+9. Flush Redis semantic cache: cache.aclear()
+```
+
+---
+
+## application.yaml
+
+```yaml
+xsocial:
+  post-guard:
+    qdrant:
+      host: ${QDRANT_HOST:localhost}
+      grpc-port: ${QDRANT_GRPC_PORT:6334}
+      collection: post_violations
+      top-k: 5
+      score-threshold: 0.75
+    semantic-cache:
+      distance-threshold: 0.10
+      ttl-seconds: 3600
+      namespace: post_guard
+    mlflow:
+      tracking-uri: ${MLFLOW_TRACKING_URI:http://mlflow:5000}
+      model-name: post-guard-bert
+      model-stage: Production
+    decision:
+      approve-threshold: 0.90
+      reject-threshold: 0.70
+    minio:
+      endpoint: ${MINIO_ENDPOINT:minio:9000}
+      access-key: ${MINIO_ACCESS_KEY}
+      secret-key: ${MINIO_SECRET_KEY}
+      bucket: mlflow-artifacts
+```
+
+---
+
+## Kafka
+
+| Direction | Topic | Trigger | Consumers |
+|-----------|-------|---------|-----------|
+| Published | `ai.model.updated` | After model promotion | ai-dashboard-svc |
+| Published | `post.moderation.flagged` | Decision = FLAGGED | ai-dashboard-svc |
 
 ---
 
@@ -86,287 +230,75 @@ Input text
 
 ```
 POST /api/v1/guard/post
-     Body: { postId, content, authorId, groupId? }
-     Response: { decision, reason, confidence, categories, modelVersion }
+     { postId, content, authorId, groupId? }
+     → { decision, reason, confidence, categories, modelVersion }
 
 POST /api/v1/guard/batch
-     Body: { items: [{postId, content, authorId}] }
+     { items: [{postId, content, authorId}] }
 
 GET  /api/v1/guard/model/status
-POST /api/v1/guard/model/refresh    # ADMIN only
+     → { activeVersion, accuracy, f1Macro, trainedAt, trainingSamples }
+
+GET  /api/v1/guard/cache/stats
+     → { hitRate, totalHits, totalMisses, cachedEntries }
+
+POST /api/v1/guard/cache/invalidate   # ADMIN — clear on policy change
+POST /api/v1/guard/model/refresh      # ADMIN — trigger immediate retrain
+
 GET  /api/v1/health
 GET  /api/v1/metrics
 ```
 
 ---
 
-## Tests
-
-- **Unit:** `test_guard_service.py`, `test_rag_service.py`
-- **Integration:** PostgreSQL container (testcontainers-python) + Kafka container
-- **Automation:** httpx TestClient — approve / flag / reject scenarios
-
----
----
-
-# media-guard-service
-
-**Type:** FastAPI · Port `8091`  
-**Primary DB:** None (stateless)  
-**Starters:** *(FastAPI — no Spring starters)*
-
----
-
-## Responsibilities
-
-Stateless media safety analysis: NSFW classification, deepfake detection, magic-byte validation, entropy analysis for polyglot / steganography files. Called synchronously by media-service before Cloudinary upload.
-
----
-
-## Checks
-
-| Check | Method | Output |
-|-------|--------|--------|
-| Magic byte | File header vs declared extension | `VALID` / `MISMATCH` |
-| MIME type | Apache Tika | `VALID` / `INVALID` |
-| Entropy | Shannon entropy per block | `NORMAL` / `SUSPICIOUS` |
-| NSFW | CLIP embedding + classifier | score 0.0–1.0 |
-| Deepfake | Face detection + frequency domain | `REAL` / `SUSPECTED_FAKE` |
-
----
-
-## API
+## Source layout
 
 ```
-POST /api/v1/guard/media
-     Body: { mediaId, tempUrl, contentType, fileSizeBytes }
-     Response: { safe, categories, confidence, details }
+post-guard-service/
+└── app/
+    ├── main.py
+    ├── config.py               # Pydantic Settings
+    ├── dependencies.py         # db pool, qdrant, semantic cache, mlflow client
+    ├── api/v1/routes/
+    │   ├── guard.py
+    │   └── model.py
+    ├── services/
+    │   ├── guard_service.py    # orchestrates cache → RAG → BERT → store
+    │   ├── rag_service.py      # Qdrant retrieval + context assembly
+    │   └── model_service.py    # MLflow load, hot-swap, version management
+    ├── infrastructure/
+    │   ├── database.py         # asyncpg pool
+    │   ├── qdrant.py           # QdrantAsyncClient wrapper
+    │   ├── semantic_cache.py   # RedisVL SemanticCache wrapper
+    │   ├── kafka.py            # aiokafka producer
+    │   ├── minio.py            # MinIO client for artifact fetch
+    │   └── ml/
+    │       ├── bert_classifier.py
+    │       ├── embeddings.py   # sentence-transformers
+    │       └── trainer.py      # fine-tune pipeline + MLflow logging
+    └── scheduler/
+        └── model_refresh_job.py
+```
 
-POST /api/v1/guard/file-check
-     Content-Type: application/octet-stream
-     Response: { safe, magicByteValid, entropyNormal }
+---
 
-GET  /api/v1/guard/model/status
-GET  /api/v1/health
-GET  /api/v1/metrics
+## Key dependencies
+
+```
+fastapi==0.133          uvicorn[standard]==0.30
+asyncpg==0.29           qdrant-client==1.12
+redisvl==0.4            mlflow==2.18
+sentence-transformers==3.1  transformers==4.44
+torch==2.3              scikit-learn==1.5
+aiokafka==0.11          apscheduler==3.10
+minio==7.2              prometheus-fastapi-instrumentator==7.0
+opentelemetry-sdk==1.25
 ```
 
 ---
 
 ## Tests
 
-- **Unit:** `test_nsfw_classifier.py`, `test_file_inspector.py`
-- **Automation:** httpx TestClient with sample images (safe, NSFW, polyglot)
-
----
----
-
-# user-analysis-service
-
-**Type:** FastAPI · Port `8092`  
-**Primary DB:** PostgreSQL (asyncpg) — schema `x_social_user_analysis`  
-**Vector store:** Qdrant (AI context only)  
-**Starters:** *(FastAPI — no Spring starters)*
-
----
-
-## Responsibilities
-
-User behaviour analysis, bot detection, anomaly detection, and recommendation-signal generation. Consumes Kafka events from all services. Publishes AI insights back to Kafka.
-
----
-
-## DB init
-
-K8S `Job` runs `psql` before Pod starts.  
-Scripts: `infrastructure/k8s/db-init/user-analysis-service/sql/`
-
----
-
-## Schema
-
-```sql
--- behavior_events  (time-series)
-id           UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-user_id      UUID        NOT NULL
-event_type   VARCHAR(50) NOT NULL
-payload      JSONB
-session_id   UUID
-ip_hash      TEXT
-created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-
--- user_analysis_reports
-id                      UUID PRIMARY KEY DEFAULT gen_random_uuid()
-user_id                 UUID UNIQUE NOT NULL
-bot_score               FLOAT
-anomaly_score           FLOAT
-violation_suspected     BOOLEAN NOT NULL DEFAULT FALSE
-violation_categories    TEXT[]
-recommendation_signals  JSONB
-last_analyzed_at        TIMESTAMPTZ
-model_version           VARCHAR(50)
-created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
-updated_at              TIMESTAMPTZ
-```
-
----
-
-## Models
-
-| Model | Algorithm | Purpose |
-|-------|-----------|---------|
-| Anomaly detector | Isolation Forest | Activity-velocity spikes |
-| Bot classifier | Gradient Boosting | Automated-account features |
-| Session analyzer | LSTM Autoencoder | Suspicious session patterns |
-| Recommendation | ALS matrix factorisation | User-item embeddings |
-
----
-
-## Kafka consumed
-
-All `user.behavior.*` events, `post.liked`, `post.viewed`, `comment.created`, `message.sent` (metadata only — no content).
-
-## Kafka published
-
-| Topic | Consumers |
-|-------|-----------|
-| `ai.user.insights` | ai-dashboard-svc |
-| `ai.user.violation.suspected` | ai-dashboard-svc, user-svc |
-| `ai.recommendation.ready` | post-svc (feed ranking) |
-
----
-
-## API
-
-```
-POST /api/v1/analysis/user/{userId}
-GET  /api/v1/analysis/user/{userId}
-GET  /api/v1/analysis/user/{userId}/timeline
-GET  /api/v1/analysis/recommendations/{userId}
-POST /api/v1/analysis/model/refresh            # ADMIN only
-GET  /api/v1/analysis/model/status
-GET  /api/v1/health
-GET  /api/v1/metrics
-```
-
----
-
-## Tests
-
-- **Unit:** `test_bot_classifier.py`, `test_anomaly_detector.py`
-- **Integration:** PostgreSQL + Kafka containers
-- **Automation:** ingest events → trigger analysis → verify report
-
----
----
-
-# ai-dashboard-service
-
-**Type:** FastAPI · Port `8093`  
-**Primary DB:** PostgreSQL (asyncpg) — schema `x_social_ai_dashboard`  
-**Starters:** *(FastAPI — no Spring starters)*
-
----
-
-## Responsibilities
-
-Admin-only backend for AI and moderation oversight. Aggregates data from post-guard-service, media-guard-service, and user-analysis-service databases. Provides a moderation queue with human-review workflow. Streams real-time metrics via WebSocket.
-
----
-
-## DB init
-
-K8S `Job` runs `psql` before Pod starts.  
-Scripts: `infrastructure/k8s/db-init/ai-dashboard-service/sql/`
-
----
-
-## Schema
-
-```sql
--- moderation_queue  (items awaiting human review)
-id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-source_service  VARCHAR(40) NOT NULL    -- post-guard|media-guard|user-analysis
-entity_id       UUID        NOT NULL
-entity_type     VARCHAR(20) NOT NULL    -- POST|MEDIA|USER
-ai_decision     VARCHAR(20)
-ai_confidence   FLOAT
-categories      TEXT[]
-status          VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-assigned_to     UUID
-reviewed_by     UUID
-review_action   VARCHAR(20)             -- APPROVE|REJECT|ESCALATE
-review_reason   TEXT
-reviewed_at     TIMESTAMPTZ
-escalated_to    UUID
-created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-updated_at      TIMESTAMPTZ
-
--- review_audit_log  (append-only)
-id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-queue_item_id   UUID        NOT NULL
-reviewer_id     UUID        NOT NULL
-action          VARCHAR(20) NOT NULL
-reason          TEXT
-created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-```
-
----
-
-## Moderation review workflow
-
-```
-AI flags content → post-guard/media-guard/user-analysis
-  → publish Kafka: ai.user.violation.suspected / post moderation event
-  → ai-dashboard-service inserts into moderation_queue
-
-Moderator reviews via dashboard:
-  PUT /api/v1/dashboard/moderation/{id}/review { action: APPROVE|REJECT|ESCALATE }
-  → update moderation_queue
-  → append review_audit_log
-  → publish Kafka back to originating service (approve/reject post, suspend user)
-```
-
----
-
-## Kafka consumed
-
-`ai.user.insights` · `ai.user.violation.suspected` · `ai.model.updated` · `message.notification.failed`
-
----
-
-## WebSocket protocol
-
-```
-Connect: WS /ws/dashboard/live  (requires role ADMIN or MODERATOR)
-
-Server → Client:
-  QUEUE_UPDATE    { queueSize: 23 }
-  VIOLATION_ALERT { userId, botScore: 0.95 }
-  METRIC_UPDATE   { metric: "flaggedToday", value: 15 }
-  MODEL_UPDATED   { modelName: "bert_guard", version: "v20260101" }
-```
-
----
-
-## API
-
-```
-GET  /api/v1/dashboard/overview
-GET  /api/v1/dashboard/moderation/stats?period=1d|7d|30d
-GET  /api/v1/dashboard/moderation/queue?status=PENDING&type=POST|MEDIA|USER
-PUT  /api/v1/dashboard/moderation/{id}/review
-GET  /api/v1/dashboard/users/violations?minScore=0.7
-GET  /api/v1/dashboard/users/bots?minBotScore=0.8
-GET  /api/v1/dashboard/models
-GET  /api/v1/dashboard/trends?period=24h|7d
-WS   /ws/dashboard/live
-GET  /api/v1/health
-GET  /api/v1/metrics
-```
-
----
-
-## Tests
-
-- **Unit:** `test_dashboard_service.py`, `test_moderation_service.py`
+- **Unit:** `test_guard_service.py` (mock Qdrant + Redis), `test_rag_service.py`, `test_trainer.py`
+- **Integration:** PostgreSQL + Qdrant + Redis containers (testcontainers-python), Kafka
+- **Automation:** approve / flag / reject scenarios · semantic cache hit test · model refresh cycle

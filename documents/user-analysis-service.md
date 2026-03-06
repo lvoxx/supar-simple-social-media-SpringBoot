@@ -1,209 +1,258 @@
 # user-analysis-service
 
 **Type:** FastAPI · Port `8092`  
-**Primary DB:** PostgreSQL (asyncpg) — schema `x_social_user_analysis`  
-**Vector store:** Qdrant (AI context only)  
-**Starters:** *(FastAPI — no Spring starters)*
+**Language:** Python 3.12
 
 ---
 
-## Responsibilities
+## AI-native storage architecture
 
-User behaviour analysis, bot detection, anomaly detection, and recommendation-signal generation. Consumes Kafka events from all services. Publishes AI insights back to Kafka.
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Operational store | **PostgreSQL** (asyncpg) | Behaviour events (time-series), analysis reports, violation flags |
+| Vector store | **Qdrant** | User behaviour embedding index for anomaly clustering and nearest-neighbour bot detection |
+| Feature store | **Redis Stack** (RedisJSON + RedisTimeSeries) | Real-time feature aggregation: per-user event counters, velocity windows, session state |
+| Experiment tracking | **MLflow** (shared instance) | Training runs, hyperparameter sweeps, metric history |
+| Model registry | **MLflow Model Registry** | Version and stage control for all ML models |
+| Artifact store | **MinIO** | Model checkpoints, training datasets, ONNX exports |
+
+### Why these choices
+
+**Qdrant** stores dense behaviour embeddings (LSTM encoder output, 256-dim). At inference time, querying the 20 nearest neighbours in embedding space provides instant context for anomaly scoring — far more informative than rule-based thresholds alone. Payload filters (`role`, `account_age_days`) allow stratified queries so bot classifiers don't penalise new legitimate users.
+
+**Redis Stack (RedisTimeSeries + RedisJSON)** is the AI feature store. RedisTimeSeries retains rolling event counts per user at 1-minute granularity (posts/min, follows/min, API calls/min), enabling sub-millisecond feature retrieval that ML models need at inference time. RedisJSON stores the latest computed feature vector per user, avoiding re-computation on every request. Standard Redis cache TTLs are still used for API response caching.
+
+**MLflow** tracks all experiment runs (hyperparameter sweeps, dataset versions) and manages the model registry with stage-gated promotion. `Development → Staging → Production → Archived` ensures only validated models reach inference.
 
 ---
 
-## DB init
+## DB init (K8S only)
 
-K8S `Job` runs `psql` before Pod starts.  
-Scripts: `infrastructure/k8s/db-init/user-analysis-service/sql/`
+| Engine | K8S resource | What it does |
+|--------|-------------|-------------|
+| PostgreSQL | `Job` | `psql` — create schema and tables |
+| Qdrant | `Job` | Qdrant REST API — create `user_behavior` collection |
+| Redis Stack | `Job` | Enable `RedisTimeSeries` and `RedisJSON` modules (via `redis.conf`) |
+| MLflow | `Job` | `mlflow db upgrade` (shared instance, if not already run) |
+
+Scripts: `infrastructure/k8s/db-init/user-analysis-service/`
 
 ---
 
-## Schema
+## PostgreSQL schema
 
 ```sql
--- behavior_events  (time-series)
+-- behavior_events  (append-only time-series)
 id           UUID        PRIMARY KEY DEFAULT gen_random_uuid()
 user_id      UUID        NOT NULL
-event_type   VARCHAR(50) NOT NULL
+event_type   VARCHAR(50) NOT NULL    -- post.created | comment.created | follow | login | …
 payload      JSONB
 session_id   UUID
 ip_hash      TEXT
 created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 
--- user_analysis_reports
-id                      UUID PRIMARY KEY DEFAULT gen_random_uuid()
-user_id                 UUID UNIQUE NOT NULL
-bot_score               FLOAT
-anomaly_score           FLOAT
-violation_suspected     BOOLEAN NOT NULL DEFAULT FALSE
+-- user_analysis_reports  (latest snapshot per user)
+id                      UUID        PRIMARY KEY DEFAULT gen_random_uuid()
+user_id                 UUID        UNIQUE NOT NULL
+bot_score               FLOAT       NOT NULL DEFAULT 0
+anomaly_score           FLOAT       NOT NULL DEFAULT 0
+violation_suspected     BOOLEAN     NOT NULL DEFAULT FALSE
 violation_categories    TEXT[]
 recommendation_signals  JSONB
 last_analyzed_at        TIMESTAMPTZ
-model_version           VARCHAR(50)
+model_version           VARCHAR(60)
 created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 updated_at              TIMESTAMPTZ
 ```
 
 ---
 
-## Models
+## Qdrant collection: `user_behavior`
 
-| Model | Algorithm | Purpose |
-|-------|-----------|---------|
-| Anomaly detector | Isolation Forest | Activity-velocity spikes |
-| Bot classifier | Gradient Boosting | Automated-account features |
-| Session analyzer | LSTM Autoencoder | Suspicious session patterns |
-| Recommendation | ALS matrix factorisation | User-item embeddings |
+```python
+from qdrant_client.models import VectorParams, Distance, HnswConfigDiff
+
+client.create_collection(
+    collection_name="user_behavior",
+    vectors_config=VectorParams(size=256, distance=Distance.COSINE),
+    hnsw_config=HnswConfigDiff(m=16, ef_construct=100)
+)
+
+# Each point payload:
+# { user_id, account_age_days, role, bot_score,
+#   anomaly_score, violation_suspected, indexed_at }
+```
 
 ---
 
-## Kafka consumed
+## Redis feature store
 
-All `user.behavior.*` events, `post.liked`, `post.viewed`, `comment.created`, `message.sent` (metadata only — no content).
+```python
+# RedisTimeSeries — rolling event velocity (1-min buckets, 24-h retention)
+# Key: ts:user:{userId}:{event_type}
+await redis.execute_command(
+    "TS.ADD", f"ts:user:{user_id}:post.created",
+    "*", 1, "RETENTION", 86400000, "LABELS", "user_id", user_id
+)
 
-## Kafka published
+# Query last 5 min window (bot velocity feature)
+samples = await redis.execute_command(
+    "TS.RANGE", f"ts:user:{user_id}:post.created",
+    int((now - 300) * 1000), int(now * 1000)
+)
 
-| Topic | Consumers |
-|-------|-----------|
-| `ai.user.insights` | ai-dashboard-svc |
-| `ai.user.violation.suspected` | ai-dashboard-svc, user-svc |
-| `ai.recommendation.ready` | post-svc (feed ranking) |
+# RedisJSON — latest feature vector (updated after every analysis run)
+# Key: json:user:features:{userId}
+await redis.execute_command(
+    "JSON.SET", f"json:user:features:{user_id}", "$",
+    json.dumps(feature_vector)
+)
+
+# Standard Redis KV — API response cache
+# Key: cache:user:report:{userId}  TTL 5 min
+```
+
+---
+
+## ML models
+
+| Model | Algorithm | Input features | Output |
+|-------|-----------|---------------|--------|
+| Anomaly detector | Isolation Forest | Event velocity, hour-of-day, session length distribution | `anomaly_score [0–1]` |
+| Bot classifier | Gradient Boosting (XGBoost) | 30+ features: follow velocity, like/post ratio, content diversity index, pHash similarity across posts | `bot_score [0–1]` |
+| Session analyser | LSTM Autoencoder | Event sequence, inter-event timing | Reconstruction error → anomaly flag |
+| Recommendation engine | ALS (implicit feedback, Spark MLlib) | User-item interaction matrix from post views, likes, follows | `recommendation_signals` (top-50 item IDs) |
+
+---
+
+## Inference pipeline
+
+```
+Kafka event received (e.g. post.created for user X)
+  ↓
+[1] Append to PostgreSQL behavior_events
+[2] RedisTimeSeries: TS.ADD for event type
+[3] Check if analysis due (last_analyzed_at > 5 min ago)
+    NO → done
+    YES ↓
+[4] Fetch feature vector from RedisJSON (cache) or re-compute from TS queries
+[5] Run Isolation Forest + XGBoost bot classifier in parallel
+[6] Run LSTM session analyser if session_count delta > threshold
+[7] Qdrant upsert: update user's behaviour embedding
+[8] Qdrant ANN query: 20 nearest neighbours → neighbourhood context
+[9] Aggregate scores → user_analysis_reports (upsert)
+[10] If bot_score > 0.85 or violation_suspected:
+       Publish Kafka: ai.user.violation.suspected
+[11] Update RedisJSON feature cache
+```
+
+---
+
+## MLflow experiment tracking
+
+```python
+with mlflow.start_run(run_name=f"xgboost_bot_{date}"):
+    mlflow.log_params({
+        "n_estimators": 500, "max_depth": 6,
+        "learning_rate": 0.05, "feature_count": 30
+    })
+    mlflow.log_metrics({
+        "auc_roc": auc_roc, "precision": precision,
+        "recall": recall, "f1": f1, "false_positive_rate": fpr
+    })
+    mlflow.xgboost.log_model(model, "xgb_bot",
+        registered_model_name="user-analysis-bot-classifier")
+```
+
+---
+
+## Kafka
+
+### Consumed
+
+`user.profile.updated` · `post.created` · `post.liked` · `comment.created` · `message.sent` (metadata only) · `group.member.joined` · `user.followed`
+
+### Published
+
+| Topic | Trigger | Consumers |
+|-------|---------|-----------|
+| `ai.user.insights` | Periodic analysis complete | ai-dashboard-svc |
+| `ai.user.violation.suspected` | bot_score > 0.85 | ai-dashboard-svc, user-svc |
+| `ai.recommendation.ready` | ALS batch job complete | post-svc (feed ranking) |
 
 ---
 
 ## API
 
 ```
-POST /api/v1/analysis/user/{userId}
+POST /api/v1/analysis/user/{userId}/trigger
 GET  /api/v1/analysis/user/{userId}
-GET  /api/v1/analysis/user/{userId}/timeline
+GET  /api/v1/analysis/user/{userId}/timeline?from=&to=
+GET  /api/v1/analysis/user/{userId}/features
+
 GET  /api/v1/analysis/recommendations/{userId}
-POST /api/v1/analysis/model/refresh            # ADMIN only
-GET  /api/v1/analysis/model/status
+
+GET  /api/v1/analysis/models/status
+POST /api/v1/analysis/models/refresh    # ADMIN — trigger retraining
+
 GET  /api/v1/health
 GET  /api/v1/metrics
 ```
 
 ---
 
-## Tests
+## Source layout
 
-- **Unit:** `test_bot_classifier.py`, `test_anomaly_detector.py`
-- **Integration:** PostgreSQL + Kafka containers
-- **Automation:** ingest events → trigger analysis → verify report
-
----
----
-
-# ai-dashboard-service
-
-**Type:** FastAPI · Port `8093`  
-**Primary DB:** PostgreSQL (asyncpg) — schema `x_social_ai_dashboard`  
-**Starters:** *(FastAPI — no Spring starters)*
-
----
-
-## Responsibilities
-
-Admin-only backend for AI and moderation oversight. Aggregates data from post-guard-service, media-guard-service, and user-analysis-service databases. Provides a moderation queue with human-review workflow. Streams real-time metrics via WebSocket.
-
----
-
-## DB init
-
-K8S `Job` runs `psql` before Pod starts.  
-Scripts: `infrastructure/k8s/db-init/ai-dashboard-service/sql/`
-
----
-
-## Schema
-
-```sql
--- moderation_queue  (items awaiting human review)
-id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-source_service  VARCHAR(40) NOT NULL    -- post-guard|media-guard|user-analysis
-entity_id       UUID        NOT NULL
-entity_type     VARCHAR(20) NOT NULL    -- POST|MEDIA|USER
-ai_decision     VARCHAR(20)
-ai_confidence   FLOAT
-categories      TEXT[]
-status          VARCHAR(20) NOT NULL DEFAULT 'PENDING'
-assigned_to     UUID
-reviewed_by     UUID
-review_action   VARCHAR(20)             -- APPROVE|REJECT|ESCALATE
-review_reason   TEXT
-reviewed_at     TIMESTAMPTZ
-escalated_to    UUID
-created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
-updated_at      TIMESTAMPTZ
-
--- review_audit_log  (append-only)
-id              UUID        PRIMARY KEY DEFAULT gen_random_uuid()
-queue_item_id   UUID        NOT NULL
-reviewer_id     UUID        NOT NULL
-action          VARCHAR(20) NOT NULL
-reason          TEXT
-created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+```
+user-analysis-service/
+└── app/
+    ├── main.py
+    ├── config.py
+    ├── dependencies.py
+    ├── api/v1/routes/
+    │   ├── analysis.py
+    │   └── models.py
+    ├── services/
+    │   ├── analysis_service.py     # pipeline orchestration
+    │   ├── feature_service.py      # RedisTimeSeries + RedisJSON feature retrieval
+    │   └── model_service.py        # MLflow load, hot-swap
+    ├── infrastructure/
+    │   ├── database.py             # asyncpg
+    │   ├── qdrant.py
+    │   ├── redis.py                # RedisTimeSeries + RedisJSON + KV cache
+    │   ├── kafka.py
+    │   ├── minio.py
+    │   └── ml/
+    │       ├── isolation_forest.py
+    │       ├── bot_classifier.py   # XGBoost
+    │       ├── lstm_analyser.py
+    │       └── als_recommender.py
+    └── scheduler/
+        ├── model_refresh_job.py
+        └── als_batch_job.py        # weekly ALS retraining
 ```
 
 ---
 
-## Moderation review workflow
+## Key dependencies
 
 ```
-AI flags content → post-guard/media-guard/user-analysis
-  → publish Kafka: ai.user.violation.suspected / post moderation event
-  → ai-dashboard-service inserts into moderation_queue
-
-Moderator reviews via dashboard:
-  PUT /api/v1/dashboard/moderation/{id}/review { action: APPROVE|REJECT|ESCALATE }
-  → update moderation_queue
-  → append review_audit_log
-  → publish Kafka back to originating service (approve/reject post, suspend user)
-```
-
----
-
-## Kafka consumed
-
-`ai.user.insights` · `ai.user.violation.suspected` · `ai.model.updated` · `message.notification.failed`
-
----
-
-## WebSocket protocol
-
-```
-Connect: WS /ws/dashboard/live  (requires role ADMIN or MODERATOR)
-
-Server → Client:
-  QUEUE_UPDATE    { queueSize: 23 }
-  VIOLATION_ALERT { userId, botScore: 0.95 }
-  METRIC_UPDATE   { metric: "flaggedToday", value: 15 }
-  MODEL_UPDATED   { modelName: "bert_guard", version: "v20260101" }
-```
-
----
-
-## API
-
-```
-GET  /api/v1/dashboard/overview
-GET  /api/v1/dashboard/moderation/stats?period=1d|7d|30d
-GET  /api/v1/dashboard/moderation/queue?status=PENDING&type=POST|MEDIA|USER
-PUT  /api/v1/dashboard/moderation/{id}/review
-GET  /api/v1/dashboard/users/violations?minScore=0.7
-GET  /api/v1/dashboard/users/bots?minBotScore=0.8
-GET  /api/v1/dashboard/models
-GET  /api/v1/dashboard/trends?period=24h|7d
-WS   /ws/dashboard/live
-GET  /api/v1/health
-GET  /api/v1/metrics
+fastapi==0.133          uvicorn[standard]==0.30
+asyncpg==0.29           qdrant-client==1.12
+redis[hiredis]==5.0     redisvl==0.4
+mlflow==2.18            xgboost==2.1
+torch==2.3              scikit-learn==1.5
+implicit==0.7           # ALS
+aiokafka==0.11          apscheduler==3.10
+minio==7.2              numpy==1.26
+prometheus-fastapi-instrumentator==7.0
+opentelemetry-sdk==1.25
 ```
 
 ---
 
 ## Tests
 
-- **Unit:** `test_dashboard_service.py`, `test_moderation_service.py`
+- **Unit:** `test_bot_classifier.py`, `test_anomaly_detector.py`, `test_feature_service.py`
+- **Integration:** PostgreSQL + Qdrant + Redis Stack + Kafka containers
+- **Automation:** ingest events → trigger analysis → verify bot_score · recommendation pipeline · violation event published
