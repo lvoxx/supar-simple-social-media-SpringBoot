@@ -3,23 +3,18 @@ management:
     web:
       exposure:
         include: health,info,metrics,prometheus
-      base-path: /actuator
   endpoint:
     health:
       probes:
         enabled: true
-      show-details: when_authorized
-      show-components: when_authorized
+      show-details: always
   tracing:
     sampling:
-      probability: ${TRACING_SAMPLE_RATE:0.1}   # 10% prod, override to 1.0 for dev
+      probability: ${TRACING_SAMPLE_RATE:0.1}
   zipkin:
     tracing:
       endpoint: ${ZIPKIN_ENDPOINT:http://localhost:9411/api/v2/spans}
   metrics:
-    tags:
-      service: ${spring.application.name}
-      env: ${SPRING_PROFILES_ACTIVE:dev}
     distribution:
       percentiles-histogram:
         http.server.requests: true

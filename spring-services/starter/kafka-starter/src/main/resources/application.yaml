@@ -27,7 +27,7 @@ sssm:
   kafka:
     retry:
       max-attempts: 3
-      initial-interval: 200ms
+      initial-interval: 200
       backoff-multiplier: 2.0
       max-interval: 10s
     dlt:

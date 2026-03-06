@@ -82,7 +82,6 @@
 
 		<micrometer-tracing.version>1.7.0-M2</micrometer-tracing.version>
 		<postgresql.version>42.7.9</postgresql.version>
-		<spring-kafka.version>2.6.13</spring-kafka.version>
 		<r2dbc-postgresql.version>1.1.1.RELEASE</r2dbc-postgresql.version>
 		<circuitbreaker-reactor.version>5.0.1</circuitbreaker-reactor.version>
 		<lombok.version>1.18.42</lombok.version>
@@ -117,6 +116,13 @@
 
 	<dependencyManagement>
 		<dependencies>
+			<!-- COMMON MODULES -->
+			<dependency>
+				<groupId>io.github.lvoxx</groupId>
+				<artifactId>common-core</artifactId>
+				<version>${common-core.version}</version>
+			</dependency>
+
 			<!-- SERVICE MODULES -->
 			<dependency>
 				<groupId>io.github.lvoxx</groupId>
@@ -245,7 +251,7 @@
 			<dependency>
 				<groupId>org.springframework.kafka</groupId>
 				<artifactId>spring-kafka</artifactId>
-				<version>${spring-kafka.version}</version>
+				<version>${spring-boot.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>io.projectreactor.kafka</groupId>

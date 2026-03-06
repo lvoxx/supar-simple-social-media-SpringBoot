@@ -6,7 +6,7 @@ spring:
     local-datacenter: datacenter1
     username: ${CASSANDRA_USER:cassandra}
     password: ${CASSANDRA_PASSWORD:cassandra}
-    schema-action: CREATE_IF_NOT_EXISTS
+    schema-action: NONE # Schema managed exclusively by K8S InitContainer
     request:
       timeout: 10s
       consistency: LOCAL_QUORUM
@@ -15,6 +15,3 @@ spring:
     connection:
       connect-timeout: 5s
       init-query-timeout: 10s
-    pool:
-      local:
-        size: 1
