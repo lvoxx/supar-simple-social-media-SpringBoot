@@ -66,30 +66,30 @@ Shared infrastructure
 
 | Service | Port | Primary DB | Description |
 |---------|------|-----------|-------------|
-| [user-service](./services/user-service.md) | 8081 | PostgreSQL | Profiles, followers, account settings, Keycloak sync |
-| [media-service](./services/media-service.md) | 8082 | PostgreSQL | Upload, processing pipeline, Cloudinary CDN |
-| [post-service](./services/post-service.md) | 8083 | PostgreSQL | Posts, likes, reposts, bookmarks, feeds |
-| [comment-service](./services/comment-service.md) | 8084 | Cassandra | Nested comments, high-throughput writes |
-| [notification-service](./services/notification-service.md) | 8085 | Cassandra | Real-time push, multi-device read sync |
-| [search-service](./services/search-service.md) | 8086 | Elasticsearch | Full-text search, trending, autocomplete |
-| [group-service](./services/group-service.md) | 8087 | PostgreSQL | Groups, membership, roles, join screening |
-| [private-message-service](./services/private-message-service.md) | 8088 | Cassandra | DM & group chat, reactions, forwarding |
-| [message-notification-service](./services/message-notification-service.md) | 8089 | Cassandra | Push notifications — FCM, APNs, Web Push |
+| [user-service](./documents/user-service.md) | 8081 | PostgreSQL | Profiles, followers, account settings, Keycloak sync |
+| [media-service](./documents/media-service.md) | 8082 | PostgreSQL | Upload, processing pipeline, Cloudinary CDN |
+| [post-service](./documents/post-service.md) | 8083 | PostgreSQL | Posts, likes, reposts, bookmarks, feeds |
+| [comment-service](./documents/comment-service.md) | 8084 | Cassandra | Nested comments, high-throughput writes |
+| [notification-service](./documents/notification-service.md) | 8085 | Cassandra | Real-time push, multi-device read sync |
+| [search-service](./documents/search-service.md) | 8086 | Elasticsearch | Full-text search, trending, autocomplete |
+| [group-service](./documents/group-service.md) | 8087 | PostgreSQL | Groups, membership, roles, join screening |
+| [private-message-service](./documents/private-message-service.md) | 8088 | Cassandra | DM & group chat, reactions, forwarding |
+| [message-notification-service](./documents/message-notification-service.md) | 8089 | Cassandra | Push notifications — FCM, APNs, Web Push |
 
 ### FastAPI AI Services
 
 | Service | Port | Primary DB | Description |
 |---------|------|-----------|-------------|
-| [post-guard-service](./services/post-guard-service.md) | 8090 | PostgreSQL | Content moderation — BERT + RAG |
-| [media-guard-service](./services/media-guard-service.md) | 8091 | — | NSFW, malware, deepfake detection |
-| [user-analysis-service](./services/user-analysis-service.md) | 8092 | PostgreSQL | Behaviour analysis, bot detection, recommendations |
-| [ai-dashboard-service](./services/ai-dashboard-service.md) | 8093 | PostgreSQL | Admin AI dashboard, moderation queue |
+| [post-guard-service](./documents/post-guard-service.md) | 8090 | PostgreSQL | Content moderation — BERT + RAG |
+| [media-guard-service](./documents/media-guard-service.md) | 8091 | — | NSFW, malware, deepfake detection |
+| [user-analysis-service](./documents/user-analysis-service.md) | 8092 | PostgreSQL | Behaviour analysis, bot detection, recommendations |
+| [ai-dashboard-service](./documents/ai-dashboard-service.md) | 8093 | PostgreSQL | Admin AI dashboard, moderation queue |
 
 ---
 
 ## Shared Modules
 
-Located under `spring-services/`:
+Located under `spring-documents/`:
 
 | Module | Path | Description |
 |--------|------|-------------|
@@ -159,7 +159,7 @@ docker compose -f docker-compose.services.yml up
 ```bash
 mvn test                                        # unit tests
 mvn failsafe:integration-test                   # integration tests (needs Docker)
-cd python-services/post-guard-service && pytest tests/ -v --cov=app
+cd python-documents/post-guard-service && pytest tests/ -v --cov=app
 ```
 
 ---
@@ -196,18 +196,18 @@ Watches `infrastructure/helm/charts/`. Automated sync with pruning and self-heal
 |----------|-------------|
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Full system design, data flows, HA |
 | [CONVENTIONS.md](./CONVENTIONS.md) | Coding rules, naming, Git workflow |
-| [services/user-service.md](./services/user-service.md) | user-service |
-| [services/media-service.md](./services/media-service.md) | media-service |
-| [services/post-service.md](./services/post-service.md) | post-service |
-| [services/comment-service.md](./services/comment-service.md) | comment-service |
-| [services/notification-service.md](./services/notification-service.md) | notification-service |
-| [services/search-service.md](./services/search-service.md) | search-service |
-| [services/group-service.md](./services/group-service.md) | group-service |
-| [services/private-message-service.md](./services/private-message-service.md) | private-message-service |
-| [services/message-notification-service.md](./services/message-notification-service.md) | message-notification-service |
-| [services/post-guard-service.md](./services/post-guard-service.md) | post-guard-service (FastAPI) |
-| [services/media-guard-service.md](./services/media-guard-service.md) | media-guard-service (FastAPI) |
-| [services/user-analysis-service.md](./services/user-analysis-service.md) | user-analysis-service (FastAPI) |
-| [services/ai-dashboard-service.md](./services/ai-dashboard-service.md) | ai-dashboard-service (FastAPI) |
+| [documents/user-service.md](./documents/user-service.md) | user-service |
+| [documents/media-service.md](./documents/media-service.md) | media-service |
+| [documents/post-service.md](./documents/post-service.md) | post-service |
+| [documents/comment-service.md](./documents/comment-service.md) | comment-service |
+| [documents/notification-service.md](./documents/notification-service.md) | notification-service |
+| [documents/search-service.md](./documents/search-service.md) | search-service |
+| [documents/group-service.md](./documents/group-service.md) | group-service |
+| [documents/private-message-service.md](./documents/private-message-service.md) | private-message-service |
+| [documents/message-notification-service.md](./documents/message-notification-service.md) | message-notification-service |
+| [documents/post-guard-service.md](./documents/post-guard-service.md) | post-guard-service (FastAPI) |
+| [documents/media-guard-service.md](./documents/media-guard-service.md) | media-guard-service (FastAPI) |
+| [documents/user-analysis-service.md](./documents/user-analysis-service.md) | user-analysis-service (FastAPI) |
+| [documents/ai-dashboard-service.md](./documents/ai-dashboard-service.md) | ai-dashboard-service (FastAPI) |
 | [modules/common-core.md](./modules/common-core.md) | common-core shared library |
 | [modules/starters.md](./modules/starters.md) | All starters reference |

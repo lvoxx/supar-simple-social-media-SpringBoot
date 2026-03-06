@@ -42,7 +42,7 @@
 │   ├── config.py            # Pydantic Settings
 │   ├── dependencies.py
 │   ├── api/v1/routes/
-│   ├── services/
+│   ├── documents/
 │   ├── infrastructure/
 │   │   ├── database.py
 │   │   ├── redis.py

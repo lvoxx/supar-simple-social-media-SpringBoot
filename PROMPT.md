@@ -70,7 +70,7 @@ Generate the following monorepo layout **exactly**:
 
 ```
 x-social-platform/
-├── spring-services/
+├── spring-documents/
 │   ├── common/
 │   │   └── common-core/               # Shared library: errors, messages, abstracts, enums
 │   ├── starters/
@@ -82,7 +82,7 @@ x-social-platform/
 │   │   ├── cassandra-starter/         # Reactive Cassandra config
 │   │   ├── websocket-starter/         # Reactive WebSocket config
 │   │   └── security-starter/          # JWT claim extraction (no auth, claims forwarding)
-│   └── services/
+│   └── documents/
 │       ├── user-service/
 │       ├── media-service/
 │       ├── post-service/
@@ -92,7 +92,7 @@ x-social-platform/
 │       ├── group-service/
 │       ├── private-message-service/
 │       └── message-notification-service/
-├── python-services/
+├── python-documents/
 │   ├── user-analysis-service/         # FastAPI: user behavior analysis
 │   ├── post-guard-service/            # FastAPI: content moderation
 │   ├── media-guard-service/           # FastAPI: media safety check
@@ -113,7 +113,7 @@ x-social-platform/
     ├── README.md
     ├── ARCHITECTURE.md
     ├── CONVENTIONS.md
-    ├── services/
+    ├── documents/
     │   ├── user-service.md
     │   ├── media-service.md
     │   ├── post-service.md
@@ -1249,7 +1249,7 @@ pipeline {
   stages {
     stage('Checkout') { ... }
     stage('Build & Unit Test') {
-      // mvn test -pl spring-services/services/user-service
+      // mvn test -pl spring-documents/documents/user-service
       // Publish JaCoCo coverage report
     }
     stage('Integration Test') {

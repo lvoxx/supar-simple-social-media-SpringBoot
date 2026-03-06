@@ -6,7 +6,7 @@
 
 **Tech:** Spring Boot 4.0.2 · PostgreSQL (R2DBC) · Redis · Kafka · Axon · Keycloak Admin API  
 **Port:** 8081  
-**Module path:** `spring-services/services/user-service`
+**Module path:** `spring-documents/documents/user-service`
 
 ## Responsibilities
 

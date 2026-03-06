@@ -6,7 +6,7 @@
 
 **Tech:** Spring Boot 4.0.2 · PostgreSQL (R2DBC) · Redis · Kafka · WebClient (post-service, media-service)  
 **Port:** 8087  
-**Module path:** `spring-services/services/group-service`
+**Module path:** `spring-documents/documents/group-service`
 
 ## Responsibilities
 
@@ -167,7 +167,7 @@ group:policy:{groupId}                 TTL 10 min
 
 **Tech:** Spring Boot 4.0.2 · **Cassandra** · Redis · Kafka · Reactive WebSocket  
 **Port:** 8088  
-**Module path:** `spring-services/services/private-message-service`
+**Module path:** `spring-documents/documents/private-message-service`
 
 ## Responsibilities
 
@@ -347,7 +347,7 @@ msg:settings:conv:{userId}:{convId}   TTL 5 min    # per-conv notification setti
 
 **Tech:** Spring Boot 4.0.2 · **Cassandra** · Redis · Kafka  
 **Port:** 8089  
-**Module path:** `spring-services/services/message-notification-service`
+**Module path:** `spring-documents/documents/message-notification-service`
 
 ## Responsibilities
 

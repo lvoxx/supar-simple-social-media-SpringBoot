@@ -2,7 +2,7 @@
 
 **Type:** FastAPI (Python)  
 **Port:** `8091`  
-**Module path:** `python-services/media-guard-service`  
+**Module path:** `python-documents/media-guard-service`  
 **AI:** CLIP + NSFW classifier + entropy analysis  
 
 ---
@@ -58,7 +58,7 @@ media-guard-service/app/
 ├── main.py
 ├── config.py
 ├── api/v1/routes/guard.py
-├── services/
+├── documents/
 │   ├── media_guard_service.py
 │   └── file_analyzer.py
 ├── infrastructure/ml/
@@ -96,7 +96,7 @@ media_guard_latency_seconds
 
 **Type:** FastAPI (Python)  
 **Port:** `8092`  
-**Module path:** `python-services/user-analysis-service`  
+**Module path:** `python-documents/user-analysis-service`  
 **Database:** PostgreSQL (asyncpg) + Qdrant (vector)  
 **Messaging:** Kafka (consumer + producer)  
 **AI:** Isolation Forest · LSTM Autoencoder · Gradient Boosting · ALS  
@@ -212,7 +212,7 @@ user-analysis-service/app/
 ├── main.py
 ├── config.py
 ├── api/v1/routes/analysis.py
-├── services/
+├── documents/
 │   ├── analysis_service.py
 │   ├── recommendation_service.py
 │   └── rag_service.py
@@ -247,7 +247,7 @@ user-analysis-service/app/
 
 **Type:** FastAPI (Python)  
 **Port:** `8093`  
-**Module path:** `python-services/ai-dashboard-service`  
+**Module path:** `python-documents/ai-dashboard-service`  
 **Database:** PostgreSQL (asyncpg — reads from all AI service DBs)  
 **Messaging:** Kafka (consumer)  
 **Real-time:** WebSocket  
@@ -364,7 +364,7 @@ ai-dashboard-service/app/
 │   ├── users.py
 │   ├── models.py
 │   └── trends.py
-├── services/
+├── documents/
 │   ├── dashboard_service.py
 │   ├── moderation_service.py
 │   └── trend_service.py

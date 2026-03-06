@@ -1,7 +1,7 @@
 # common-core
 
 **Type:** Shared library (not a runnable service)  
-**Path:** `spring-services/common/common-core`  
+**Path:** `spring-documents/common/common-core`  
 **Packaging:** JAR imported by all Spring Boot services  
 
 ---
