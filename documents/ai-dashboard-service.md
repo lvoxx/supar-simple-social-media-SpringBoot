@@ -7,12 +7,12 @@
 
 ## AI-native storage architecture
 
-| Layer                      | Technology                                    | Role                                                                          |
-| -------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
-| Operational store          | **PostgreSQL** (asyncpg)                      | Moderation queue, human-review audit log, alert rules                         |
-| Aggregated insights        | **Redis Stack** (RedisJSON + RedisTimeSeries) | Pre-aggregated KPIs read by dashboard; real-time metric counters; alert state |
-| Model registry (read-only) | **MLflow Model Registry** (shared instance)   | Query model versions, metrics, stage for the Models panel                     |
-| Real-time push             | **WebSocket** over Redis Pub/Sub              | Cross-pod live dashboard streaming                                            |
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Operational store | **PostgreSQL** (asyncpg) | Moderation queue, human-review audit log, alert rules |
+| Aggregated insights | **Redis Stack** (RedisJSON + RedisTimeSeries) | Pre-aggregated KPIs read by dashboard; real-time metric counters; alert state |
+| Model registry (read-only) | **MLflow Model Registry** (shared instance) | Query model versions, metrics, stage for the Models panel |
+| Real-time push | **WebSocket** over Redis Pub/Sub | Cross-pod live dashboard streaming |
 
 ### Why Redis Stack as the insights layer
 
@@ -22,10 +22,10 @@ The dashboard front-end requires sub-second refreshes of KPIs (flagged today, qu
 
 ## DB init (K8S only)
 
-| Engine      | K8S resource | What it does                                            |
-| ----------- | ------------ | ------------------------------------------------------- |
-| PostgreSQL  | `Job`        | `psql` — create schema and tables                       |
-| Redis Stack | `Job`        | Ensure `RedisTimeSeries` and `RedisJSON` modules loaded |
+| Engine | K8S resource | What it does |
+|--------|-------------|-------------|
+| PostgreSQL | `Job` | `psql` — create schema and tables |
+| Redis Stack | `Job` | Ensure `RedisTimeSeries` and `RedisJSON` modules loaded |
 
 Scripts: `infrastructure/k8s/db-init/ai-dashboard-service/`
 
@@ -130,68 +130,48 @@ for model in models:
 
 ## Moderation review workflow
 
-```mermaid
-flowchart TD
+```
+AI service flags content:
+  post-guard publishes: post.moderation.flagged
+  user-analysis publishes: ai.user.violation.suspected
+  → ai-dashboard-service consumer inserts into moderation_queue
+  → Increments ts:dashboard:queue_depth
 
-    %% AI detection
-    A1[post-guard-service] -->|Kafka: post.moderation.flagged| B[ai-dashboard-service]
-    A2[user-analysis-service] -->|Kafka: ai.user.violation.suspected| B
+Moderator opens dashboard, reviews queue:
+  GET /api/v1/dashboard/moderation/queue
 
-    %% Insert moderation queue
-    B --> C[Insert into moderation_queue]
-    C --> D[Increment TS Metric<br/>ts:dashboard:queue_depth]
+Moderator submits decision:
+  PUT /api/v1/dashboard/moderation/{id}/review
+    { action: APPROVE | REJECT | ESCALATE, reason: "..." }
+  → UPDATE moderation_queue
+  → INSERT review_audit_log
+  → Decrement ts:dashboard:queue_depth
+  → Publish Kafka: ai.moderation.decision
+    → post-svc: restore / delete post
+    → user-svc: clear / confirm violation flag
 
-    %% Moderator dashboard
-    E[Moderator] -->|GET /api/v1/dashboard/moderation/queue| B
-
-    %% Review decision
-    E -->|PUT /api/v1/dashboard/moderation/{id}/review| F[Review Decision]
-
-    F -->|UPDATE| C
-    F --> G[Insert review_audit_log]
-    F --> H[Decrement TS Metric<br/>ts:dashboard:queue_depth]
-
-    %% Publish moderation decision
-    F -->|Kafka: ai.moderation.decision| K
-
-    %% Consumers
-    K --> L[post-service<br/>restore / delete post]
-    K --> M[user-service<br/>clear / confirm violation]
-
-    %% Alert evaluation
-    C --> N[Evaluate alert_rules]
-    H --> N
-
-    N -->|Triggered| O[Send Alert<br/>Slack / Email]
+Alert check:
+  After every queue mutation — evaluate alert_rules against current TS values
+  If triggered → POST to notification_target (Slack / email)
 ```
 
 ---
 
 ## WebSocket protocol
 
-```mermaid
-flowchart TD
+```
+Connect: WS /ws/dashboard/live  (requires role ADMIN or MODERATOR)
 
-    %% Connection
-    A[Admin / Moderator Client] -->|WS Connect<br/>/ws/dashboard/live<br/>Role: ADMIN or MODERATOR| B[ai-dashboard-service<br/>WebSocket Gateway]
+Server → Client  (pushed on every Kafka event):
+  QUEUE_UPDATE     { queueSize, pendingByType }
+  VIOLATION_ALERT  { userId, botScore, categories }
+  METRIC_UPDATE    { metric, value, timestamp }
+  MODEL_UPDATED    { modelName, version, accuracy, f1 }
 
-    %% Event Sources
-    K[Kafka Events] --> B
-
-    %% Server Push
-    B -->|QUEUE_UPDATE| C1[Client receives<br/>{ queueSize, pendingByType }]
-    B -->|VIOLATION_ALERT| C2[Client receives<br/>{ userId, botScore, categories }]
-    B -->|METRIC_UPDATE| C3[Client receives<br/>{ metric, value, timestamp }]
-    B -->|MODEL_UPDATED| C4[Client receives<br/>{ modelName, version, accuracy, f1 }]
-
-    %% Client Commands
-    A -->|PING| D1[Keepalive]
-    A -->|SUBSCRIBE_METRIC<br/>{ metric }| D2[Register Metric Subscription]
-    A -->|UNSUBSCRIBE_METRIC<br/>{ metric }| D3[Remove Metric Subscription]
-
-    %% Metric streaming
-    D2 --> B
-    B -->|Filtered METRIC_UPDATE| A
+Client → Server:
+  PING
+  SUBSCRIBE_METRIC { metric }
+  UNSUBSCRIBE_METRIC { metric }
 ```
 
 Cross-pod WS delivery: Redis Pub/Sub channel `dashboard:live` — all pod subscribers push to their connected WebSocket clients.
@@ -202,17 +182,17 @@ Cross-pod WS delivery: Redis Pub/Sub channel `dashboard:live` — all pod subscr
 
 ### Consumed
 
-| Topic                         | Action                                                                   |
-| ----------------------------- | ------------------------------------------------------------------------ |
-| `post.moderation.flagged`     | Insert into moderation_queue, push QUEUE_UPDATE                          |
+| Topic | Action |
+|-------|--------|
+| `post.moderation.flagged` | Insert into moderation_queue, push QUEUE_UPDATE |
 | `ai.user.violation.suspected` | Insert into moderation_queue, push VIOLATION_ALERT, increment TS counter |
-| `ai.model.updated`            | Update RedisTimeSeries gauge, push MODEL_UPDATED                         |
-| `message.notification.failed` | Log, push METRIC_UPDATE                                                  |
+| `ai.model.updated` | Update RedisTimeSeries gauge, push MODEL_UPDATED |
+| `message.notification.failed` | Log, push METRIC_UPDATE |
 
 ### Published
 
-| Topic                    | Trigger                | Consumers                     |
-| ------------------------ | ---------------------- | ----------------------------- |
+| Topic | Trigger | Consumers |
+|-------|---------|-----------|
 | `ai.moderation.decision` | Human review submitted | post-svc, user-svc, media-svc |
 
 ---
