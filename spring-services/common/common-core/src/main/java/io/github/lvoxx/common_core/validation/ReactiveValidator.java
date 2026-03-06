@@ -12,6 +12,10 @@ import jakarta.validation.Validator;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+/**
+ * Reactive bean validation wrapper.
+ * Safe to use in WebFlux / R2DBC pipelines (non-blocking).
+ */
 @Slf4j
 @Component
 public class ReactiveValidator {
@@ -22,8 +26,10 @@ public class ReactiveValidator {
     }
 
     /**
-     * Validate object and return Mono.error(ValidationException) if there are
-     * violations
+     * Validate {@code object} against its constraint annotations.
+     *
+     * @return {@code Mono.just(object)} if valid,
+     *         {@code Mono.error(ValidationException)} otherwise.
      */
     public <T> Mono<T> validate(T object) {
         Set<ConstraintViolation<T>> violations = validator.validate(object);
