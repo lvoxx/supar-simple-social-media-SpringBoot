@@ -1,0 +1,25 @@
+CREATE TABLE IF NOT EXISTS media_assets (
+    id                   UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id             UUID        NOT NULL,
+    owner_type           VARCHAR(20) NOT NULL,
+    original_filename    TEXT,
+    content_type         VARCHAR(100),
+    file_size_bytes      BIGINT,
+    cloudinary_public_id TEXT,
+    cloudinary_url       TEXT,
+    cdn_url              TEXT,
+    thumbnail_url        TEXT,
+    width                INT,
+    height               INT,
+    duration_seconds     INT,
+    status               VARCHAR(20) NOT NULL DEFAULT 'PROCESSING',
+    rejection_reason     TEXT,
+    created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at           TIMESTAMPTZ,
+    created_by           UUID,
+    updated_by           UUID,
+    is_deleted           BOOLEAN     NOT NULL DEFAULT FALSE,
+    deleted_at           TIMESTAMPTZ,
+    deleted_by           UUID
+);
+CREATE INDEX IF NOT EXISTS idx_media_assets_owner ON media_assets(owner_id, owner_type) WHERE is_deleted = false;

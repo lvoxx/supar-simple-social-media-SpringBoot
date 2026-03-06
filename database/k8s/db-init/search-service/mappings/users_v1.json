@@ -1,0 +1,14 @@
+{
+  "settings": { "number_of_shards": 2, "number_of_replicas": 1, "refresh_interval": "1s" },
+  "mappings": {
+    "properties": {
+      "id":          { "type": "keyword" },
+      "username":    { "type": "search_as_you_type" },
+      "displayName": { "type": "search_as_you_type" },
+      "bio":         { "type": "text" },
+      "avatarUrl":   { "type": "keyword", "index": false },
+      "isVerified":  { "type": "boolean" },
+      "isDeleted":   { "type": "boolean" }
+    }
+  }
+}
