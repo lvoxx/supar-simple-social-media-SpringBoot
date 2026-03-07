@@ -42,12 +42,6 @@
 			<artifactId>spring-boot-starter-data-cassandra-reactive</artifactId>
 		</dependency>
 
-		<!-- ULID -->
-		<dependency>
-			<groupId>com.github.f4b6a3</groupId>
-			<artifactId>ulid-creator</artifactId>
-		</dependency>
-
 		<!-- Lombok -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>

@@ -1,10 +1,13 @@
 package io.github.lvoxx.redis_starter.ratelimit;
 
+import java.time.Duration;
+
 import org.redisson.api.RRateLimiterReactive;
-import org.redisson.api.RateIntervalUnit;
 import org.redisson.api.RateType;
 import org.redisson.api.RedissonReactiveClient;
+import org.springframework.stereotype.Service;
 
+import io.github.lvoxx.common_core.exception.RateLimitExceededException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -14,27 +17,31 @@ import reactor.core.publisher.Mono;
  */
 @Slf4j
 @RequiredArgsConstructor
+@Service
 public class RateLimiterService {
 
     private final RedissonReactiveClient redissonClient;
+
     private final long capacity;
     private final long refillTokens;
     private final long refillPeriodSeconds;
 
     /**
      * Try to consume one token for the given key.
-     *
-     * @return {@code Mono<Boolean>} true if allowed, false if rate limited.
      */
     public Mono<Boolean> tryConsume(String key, String path) {
         String rateLimiterKey = "rate-limit:" + key + ":" + sanitisePath(path);
         RRateLimiterReactive rateLimiter = redissonClient.getRateLimiter(rateLimiterKey);
 
-        return rateLimiter.trySetRate(RateType.PER_CLIENT, capacity, refillPeriodSeconds, RateIntervalUnit.SECONDS)
+        Duration interval = Duration.ofSeconds(refillPeriodSeconds);
+
+        return rateLimiter
+                .trySetRate(RateType.PER_CLIENT, capacity, interval)
                 .then(rateLimiter.tryAcquire(1))
                 .doOnNext(allowed -> {
-                    if (!allowed)
+                    if (!allowed) {
                         log.warn("Rate limit exceeded for key={} path={}", key, path);
+                    }
                 });
     }
 

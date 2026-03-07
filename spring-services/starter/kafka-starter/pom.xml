@@ -29,6 +29,10 @@
 
 		<!-- Spring Kafka -->
 		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-kafka</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.kafka</groupId>
 			<artifactId>spring-kafka</artifactId>
 		</dependency>
@@ -37,12 +41,6 @@
 		<dependency>
 			<groupId>io.projectreactor.kafka</groupId>
 			<artifactId>reactor-kafka</artifactId>
-		</dependency>
-
-		<!-- ULID (for eventId generation) -->
-		<dependency>
-			<groupId>com.github.f4b6a3</groupId>
-			<artifactId>ulid-creator</artifactId>
 		</dependency>
 
 		<!-- Jackson (JSON serialization for Kafka messages) -->

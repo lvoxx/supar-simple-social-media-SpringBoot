@@ -19,6 +19,11 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>io.github.lvoxx</groupId>
+			<artifactId>common-core</artifactId>
+		</dependency>
+
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
 		</dependency>
