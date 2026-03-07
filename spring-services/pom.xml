@@ -107,8 +107,7 @@
 		<!-- COMMON -->
 		<module>common</module>
 		<!-- SERVICES -->
-		<module>media-service</module>
-		<module>post-service</module>
+		<module>service</module>
 		<!-- STARTERS -->
 		<module>starter</module>
 	</modules>
