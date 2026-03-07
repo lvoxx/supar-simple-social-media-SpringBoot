@@ -94,8 +94,7 @@
 		<bucket4j-redis.version>8.10.1</bucket4j-redis.version>
 		<tika-core.version>3.2.3</tika-core.version>
 		<avro.version>1.12.1</avro.version>
-		<uuid-creator.version>6.1.1</uuid-creator.version>
-		<ulid-creator.version>5.2.4</ulid-creator.version>
+		<ulid-creator.version>8.3.0</ulid-creator.version>
 		<axon-spring-boot.version>4.10.0</axon-spring-boot.version>
 		<kafka-avro-serializer.version>8.1.1</kafka-avro-serializer.version>
 		<cloudinary.version>1.39.0</cloudinary.version>
@@ -362,13 +361,8 @@
 				<version>${swagger-annotation.version}</version>
 			</dependency>
 			<dependency>
-				<groupId>com.github.f4b6a3</groupId>
-				<artifactId>uuid-creator</artifactId>
-				<version>${uuid-creator.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.f4b6a3</groupId>
-				<artifactId>ulid-creator</artifactId>
+				<groupId>de.huxhorn.sulky</groupId>
+				<artifactId>de.huxhorn.sulky.ulid</artifactId>
 				<version>${ulid-creator.version}</version>
 			</dependency>
 			<dependency>

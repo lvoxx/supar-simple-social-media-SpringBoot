@@ -52,8 +52,8 @@
 
 		<!-- ULID Generator -->
 		<dependency>
-			<groupId>com.github.f4b6a3</groupId>
-			<artifactId>ulid-creator</artifactId>
+			<groupId>de.huxhorn.sulky</groupId>
+			<artifactId>de.huxhorn.sulky.ulid</artifactId>
 		</dependency>
 
 		<dependency>

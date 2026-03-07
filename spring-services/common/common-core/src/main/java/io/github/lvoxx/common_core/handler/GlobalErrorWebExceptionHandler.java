@@ -18,6 +18,7 @@ import io.github.lvoxx.common_core.exception.ResourceNotFoundException;
 import io.github.lvoxx.common_core.exception.ValidationException;
 import io.github.lvoxx.common_core.message.MessageKeys;
 import io.github.lvoxx.common_core.model.ApiResponse;
+import io.github.lvoxx.common_core.model.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

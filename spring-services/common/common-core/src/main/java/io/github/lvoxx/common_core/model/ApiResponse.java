@@ -1,13 +1,10 @@
 package io.github.lvoxx.common_core.model;
 
-import io.github.lvoxx.common_core.handler.ErrorResponse;
-
 public record ApiResponse<T>(
-    boolean success,
-    T data,
-    ErrorResponse error,
-    ApiMeta meta
-) {
+        boolean success,
+        T data,
+        ErrorResponse error,
+        ApiMeta meta) {
     public static <T> ApiResponse<T> success(T data) {
         return new ApiResponse<>(true, data, null, ApiMeta.now());
     }
